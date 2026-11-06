@@ -1,10 +1,10 @@
 name: Publish the verified FocoNow DMG
 
-on:
+"on":
   push:
     branches: [main]
     paths: [.github/workflows/publish-foconow-dmg.yml]
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: write
