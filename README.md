@@ -1,6 +1,6 @@
 # FocoNow
 
-**A private daily workspace for macOS.** Choose what matters, give it a block of focus, and record what you learned. Your plans, journal, track your screen time,and focus history stay on your Mac.
+**A private daily workspace for macOS.** Choose what matters, give it a block of focus, and record what you learned. Your plans, journal, track your iPhone screen time, and focus history stay on your Mac.
 
 [Download for Mac](https://github.com/mythosbrain/foconow/releases/tag/v1.15.2) · [Build from source](#build-from-source) · [Privacy and permissions](#privacy-and-permissions)
 
