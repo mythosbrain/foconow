@@ -28,11 +28,11 @@ Review focus by day and task, and see how many planned tasks you completed. The 
 
 ## Install on Mac
 
-1. Download `FocoNow-Mac-v1.15.2.zip` from [the Mac preview release](https://github.com/mythosbrain/foconow/releases/tag/v1.15.2).
-2. Unzip it, move **FocoNow.app** to **Applications**, and open it.
+1. Download `FocoNow-Mac-v1.15.2.dmg` from [the Mac preview release](https://github.com/mythosbrain/foconow/releases/tag/v1.15.2).
+2. Open the disk image and drag **FocoNow.app** onto the **Applications** shortcut. Then open FocoNow from Applications.
 3. Follow the welcome walkthrough or choose **Skip setup** to start using My Day.
 
-The preview ZIP supports Apple silicon and macOS 13 or later. Desktop widgets require macOS 14 or later. The ZIP is locally signed. Apple has not notarized this build, so macOS may ask you to review it in **Privacy & Security**. [Apple’s instructions for opening apps](https://support.apple.com/102445)
+The preview supports Apple silicon and macOS 13 or later. Desktop widgets require macOS 14 or later. The app is locally signed and may require approval in **Privacy & Security** because the preview has yet to be notarized by Apple. [Apple’s instructions for opening apps](https://support.apple.com/102445)
 
 ## Privacy and permissions
 
