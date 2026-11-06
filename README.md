@@ -1,66 +1,86 @@
-# FocoNow
+<h1 align="center">
+  <img src="docs/images/foconow-banner.svg" width="1280" alt="FocoNow · Make your time count.">
+</h1>
 
-**A private daily workspace for macOS.** Choose what matters, give it a block of focus, and record what you learned. Your plans, journal, track your iPhone screen time, and focus history stay on your Mac.
+<p align="center">
+  A local-first workspace for planning your day, focusing on one task, and reflecting before you close the lid.<br>
+  You can also review your iPhone Screen Time from your Mac.
+</p>
 
-[Download for Mac](https://github.com/mythosbrain/foconow/releases/tag/v1.15.2) · [Build from source](#build-from-source) · [Privacy and permissions](#privacy-and-permissions)
+<p align="center">
+  <a href="https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.15.2.dmg?layout=2"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
+</p>
 
-![My Day in FocoNow with upcoming tasks, a live focus timer, daily priorities, and a review editor](docs/images/my-day.jpg)
+<p align="center"><strong>Apple silicon</strong> · macOS 13 or later · Free preview</p>
 
-## One place for your day
+<p align="center">
+  <a href="https://mythosbrain.github.io/foconow-site/">Website</a> ·
+  <a href="#install-on-mac">Install</a> ·
+  <a href="#privacy-and-permissions">Privacy</a> ·
+  <a href="#build-from-source">Build from source</a>
+</p>
 
-1. **Plan in My Day.** Pick a priority, add a few tasks, and bring unfinished work forward when you need it.
-2. **Focus on one task.** Start a Pomodoro from the app or menu bar. Set your own focus and break lengths, and keep an eye on the clock with a desktop widget.
-3. **Review your day.** Write a short reflection in your journal. In Insights, see how much focus time you logged and how it was distributed.
+![My Day in FocoNow with daily priorities, upcoming tasks, a focus timer, and a review editor](docs/images/my-day.jpg)
 
-### Tasks & Focus
+## Your daily workspace
 
-Add task notes, star priorities, and attach a focus session to a task. The timer keeps running when you close the main window.
+| Workspace | What you can do |
+| :--- | :--- |
+| **My Day** | Set your main priority, plan your tasks, and bring unfinished work forward when you need it. |
+| **Tasks & Focus** | Prioritize tasks, add notes, and start a Pomodoro. The timer keeps running in the menu bar when you close the main window. |
+| **Journal & Insights** | Write a short daily review, then see where your focus time went and how your tasks progressed. |
+| **Desktop widgets** | Check your timer, upcoming tasks, or a streak at a glance. Requires macOS 14 or later. |
 
-![Tasks & Focus shows a task list with priorities beside the Pomodoro timer](docs/images/tasks-focus.jpg)
+**Bad Habits** and **iPhone Screen Time** are separate tools for tracking streaks and reviewing the phone activity already available on your Mac.
 
-### Insights
+| Tasks & Focus | Insights |
+| :---: | :---: |
+| ![Task priorities beside the Pomodoro timer](docs/images/tasks-focus.jpg) | ![Daily focus time and completed sessions in Insights](docs/images/insights.jpg) |
 
-Review focus by day and task, and see how many planned tasks you completed. The separate **Bad Habits** tool tracks patterns and streaks. **iPhone Screen Time** can import reports already available on your Mac.
-
-![Focus Insights with a daily chart and a summary of recorded focus time](docs/images/insights.jpg)
-
-*Screenshots show FocoNow with sample records.*
+*Screenshots show sample data.*
 
 ## Install on Mac
 
-1. Download `FocoNow-Mac-v1.15.2.dmg` from [the Mac preview release](https://github.com/mythosbrain/foconow/releases/tag/v1.15.2).
-2. Open the disk image and drag **FocoNow.app** onto the **Applications** shortcut. Then open FocoNow from Applications.
-3. Follow the welcome walkthrough or choose **Skip setup** to start using My Day.
+1. Download [FocoNow v1.15.2 for Apple silicon](https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.15.2.dmg?layout=2).
+2. Open the DMG and drag **FocoNow.app** onto the **Applications** shortcut.
+3. Launch FocoNow from Applications. Follow the welcome walkthrough or select **Skip setup** to open My Day.
 
-The preview supports Apple silicon and macOS 13 or later. Desktop widgets require macOS 14 or later. The app is locally signed and may require approval in **Privacy & Security** because the preview has yet to be notarized by Apple. [Apple’s instructions for opening apps](https://support.apple.com/102445)
+This preview uses local signing. macOS may ask you to approve the app under **System Settings → Privacy & Security**. [Apple’s instructions for opening apps](https://support.apple.com/102445)
+
+[Download page](https://mythosbrain.github.io/foconow-site/) · [Preview release notes](https://github.com/mythosbrain/foconow/releases/tag/v1.15.2)
 
 ## Privacy and permissions
 
-FocoNow stores your app data locally and works offline. Export a backup through **Settings & Backup** to save your plans, journal, and habit records to a file you choose. Pomodoro history is stored separately on your Mac.
+FocoNow works offline and stores your plans, journal, and focus history on your Mac. Use **Settings & Backup** to export your plans, journal, and habit records to a file you choose. Pomodoro history is stored separately.
 
-![FocoNow first-launch walkthrough with its local-data explanation and three setup steps](docs/images/first-launch.jpg)
+The core workspace works right away. The walkthrough explains each optional setting before you enable it.
 
-The core workspace needs no additional access. The walkthrough explains each optional setting before you enable it.
+| Optional setting | What it enables |
+| :--- | :--- |
+| **Notifications** | Timer completion alerts and scheduled reminders. |
+| **Open at login** | Starts FocoNow when you sign in so the menu bar controls are ready. |
+| **Accessibility** | Reads the iPhone Screen Time report you open in System Settings and lets you import past days. |
+| **Full Disk Access** | Reads protected files for the alternative iPhone activity feed already synced to this Mac. |
 
-| Option | What it enables |
-| --- | --- |
-| Notifications | Timer completion alerts and scheduled reminders. |
-| Open at login | Starts FocoNow when you sign in so menu bar controls are ready. |
-| Accessibility | Reads the iPhone Screen Time report you open in System Settings. |
-| Full Disk Access | Lets FocoNow read protected files for the alternative synced iPhone activity source. |
+Apple handles Screen Time syncing. FocoNow saves imported reports locally. **Read from Settings** captures the displayed total. The alternative activity feed can lag or contain partial data.
 
-Apple handles Screen Time syncing between devices. FocoNow reads what’s already on the Mac and saves imported reports locally. **Read from Settings** captures the displayed total. The alternative synced feed can lag or contain partial activity.
+<details>
+<summary>Preview the first-run walkthrough</summary>
+
+![FocoNow’s first-run walkthrough explaining local storage and optional permissions](docs/images/first-launch.jpg)
+
+</details>
 
 ## Build from source
 
-On a Mac with Xcode or Apple Command Line Tools and Node.js installed, run:
+On a Mac with Xcode or Apple Command Line Tools and Node.js installed, run the following from the repository root.
 
-```sh
+~~~bash
 npm test
 npm run check
 bash scripts/build-mac.sh
-```
+~~~
 
-Find the app and ZIP in `releases/`. The build bundles the local web interface in a native SwiftUI and WebKit app and signs it locally. In Xcode, use the `HabitCounterMac` scheme in `Apple/HabitCounter.xcodeproj`. The project also includes an experimental iPhone target with separate signing requirements.
+The build bundles the offline web interface inside a native SwiftUI and WebKit app, signs it locally, and writes the app and ZIP to `releases/`. In Xcode, open `Apple/HabitCounter.xcodeproj` and select the `HabitCounterMac` scheme.
 
-For native checks, run `bash scripts/check-screen-time.sh` and `bash scripts/check-widgets.sh`.
+For native verification, run `bash scripts/check-screen-time.sh` and `bash scripts/check-widgets.sh`. The project also includes an experimental iPhone target with [separate signing requirements](Apple/SCREEN-TIME-SETUP.md).
