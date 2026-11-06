@@ -1,0 +1,90 @@
+import Foundation
+
+@main
+struct PomodoroChecks {
+    static func main() throws {
+        let directory = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("habit-pomodoro-check-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        var time = Date(timeIntervalSince1970: 1793833200)
+        let engine = PomodoroEngine(directory: directory, clock: { time }, ticking: false)
+        try engine.configure(work: 1, short: 1, long: 2, every: 2)
+        try engine.focusTask(id: "task-1", date: "2026-11-04", title: "The important task")
+        assert(engine.record.status == "running" && engine.remaining == 60)
+        let diskBeforeTick = try Data(contentsOf: directory.appendingPathComponent("pomodoro.json"))
+        time.addTimeInterval(20); engine.tick()
+        assert(engine.remaining == 40)
+        let diskAfterTick = try Data(contentsOf: directory.appendingPathComponent("pomodoro.json"))
+        assert(diskBeforeTick == diskAfterTick, "Counting down must not write disk every second")
+        do { try engine.selectTask(id: "other", date: "2026-11-04", title: "Other"); fatalError("Changed a running target") } catch { }
+        do { try engine.configure(work: 30, short: 5, long: 15, every: 4); fatalError("Changed a running duration") } catch { }
+        try engine.pause()
+        assert(engine.record.status == "paused" && engine.remaining == 40)
+        time.addTimeInterval(600); engine.tick()
+        assert(engine.remaining == 40)
+        let paused = PomodoroEngine(directory: directory, clock: { time }, ticking: false)
+        assert(paused.record.status == "paused" && paused.remaining == 40)
+        try paused.start(); time.addTimeInterval(40); paused.tick(); paused.tick()
+        assert(paused.record.status == "completed" && paused.record.sessions.count == 1)
+        assert(paused.record.sessions[0].taskId == "task-1" && paused.record.sessions[0].seconds == 60)
+        assert(paused.record.sessions[0].taskTitle == "The important task")
+        assert(paused.nextPhase == "short")
+        try paused.start(); assert(paused.record.phase == "short")
+        time.addTimeInterval(60); paused.tick()
+        assert(paused.record.sessions.count == 1, "Breaks must not inflate focus totals")
+        try paused.start(); time.addTimeInterval(60); paused.tick()
+        assert(paused.record.sessions.count == 2 && paused.nextPhase == "long")
+        try paused.start(); assert(paused.record.phase == "long" && paused.remaining == 120)
+        let reopened = PomodoroEngine(directory: directory, clock: { time }, ticking: false)
+        assert(reopened.record.status == "running" && reopened.remaining == 120)
+        time.addTimeInterval(3600); reopened.tick()
+        assert(reopened.record.status == "completed" && reopened.record.sessions.count == 2)
+        reopened.tick(); assert(reopened.record.sessions.count == 2, "Wake-up must settle exactly one interval and wait for the next start")
+        try reopened.start(); time.addTimeInterval(20); try reopened.reset()
+        assert(reopened.record.sessions.count == 2 && reopened.record.status == "ready")
+        do { try reopened.configure(work: 0, short: 5, long: 15, every: 4); fatalError("Accepted zero work minutes") } catch { }
+        assert(reopened.record.settings.work == 1)
+        try reopened.choosePhase("short"); assert(reopened.remaining == 60)
+        let bad = directory.appendingPathComponent("corrupt", isDirectory: true)
+        try FileManager.default.createDirectory(at: bad, withIntermediateDirectories: true)
+        let corruptFile = bad.appendingPathComponent("pomodoro.json")
+        try Data("unreadable".utf8).write(to: corruptFile)
+        let broken = PomodoroEngine(directory: bad, clock: { time }, ticking: false)
+        assert(broken.storageError != nil)
+        do { try broken.start(); fatalError("Overwrote corrupt timer state") } catch { }
+        assert(tryRead(corruptFile) == "unreadable")
+        var alarms: [String] = []
+        let trackedDirectory = directory.appendingPathComponent("tracked")
+        let tracked = PomodoroEngine(directory: trackedDirectory, clock: { time }, ticking: false, alarm: { alarms.append($0) })
+        try tracked.configure(work: 1, short: 1, long: 1, every: 2)
+        try tracked.start(); time.addTimeInterval(20); try tracked.pause()
+        assert(tracked.record.focusSpans?.count == 1)
+        assert(tracked.record.focusSpans!.reduce(0) { $0 + ($1.end-$1.start)/1000 } == 20)
+        time.addTimeInterval(600)
+        let resumed = PomodoroEngine(directory: trackedDirectory, clock: { time }, ticking: false, alarm: { alarms.append($0) })
+        try resumed.start(); time.addTimeInterval(10); try resumed.reset()
+        assert(resumed.record.focusSpans!.reduce(0) { $0 + ($1.end-$1.start)/1000 } == 30, "Interrupted focus is saved; pauses are excluded")
+        assert(resumed.record.sessions.isEmpty)
+        try resumed.start(); time.addTimeInterval(60); resumed.tick(); resumed.tick()
+        assert(alarms == ["FocusFinished"], "Exactly one focus alarm")
+        assert(resumed.record.sessions[0].tracked == true)
+        assert(resumed.record.focusSpans!.reduce(0) { $0 + ($1.end-$1.start)/1000 } == 90)
+        try resumed.start(); time.addTimeInterval(60); resumed.tick()
+        try resumed.choosePhase("long"); try resumed.start(); time.addTimeInterval(60); resumed.tick()
+        assert(alarms == ["FocusFinished", "BreakFinished", "BreakFinished"], "Both breaks share an alarm distinct from focus")
+        assert(resumed.record.focusSpans!.reduce(0) { $0 + ($1.end-$1.start)/1000 } == 90, "Breaks never count as work")
+        try resumed.setSounds(false); try resumed.start(); time.addTimeInterval(60); resumed.tick()
+        assert(alarms.count == 3, "Muted alarms stay silent")
+        let restored = PomodoroEngine(directory: trackedDirectory, clock: { time }, ticking: false)
+        assert(restored.record.settings.sounds == false && restored.record.focusSpans!.count == 4)
+        // Version-one files from before focus tracking and sounds remain readable.
+        var legacy = try JSONSerialization.jsonObject(with: JSONEncoder().encode(restored.record)) as! [String: Any]
+        legacy.removeValue(forKey: "focusSpans"); legacy.removeValue(forKey: "focusStartedAt")
+        var settings = legacy["settings"] as! [String: Any]; settings.removeValue(forKey: "sounds"); legacy["settings"] = settings
+        try JSONSerialization.data(withJSONObject: legacy).write(to: trackedDirectory.appendingPathComponent("pomodoro.json"))
+        let migrated = PomodoroEngine(directory: trackedDirectory, clock: { time }, ticking: false)
+        assert(migrated.storageError == nil && migrated.record.sessions.count == restored.record.sessions.count)
+        print("PASS: unfinished focus saved across pause/reset/relaunch; pauses and breaks excluded; new sessions marked to prevent duplicate totals; distinct exactly-once focus/break alarms; alarm mute persists; legacy files migrate")
+        print("PASS: real deadline accounting; pause/resume and process relaunch; no per-second writes; one completion per interval; work/break/long-break rotation; task-linked totals; sleep catch-up; interrupted work excluded; active-edit guards; invalid settings and corrupt data preserved")
+    }
+    static func tryRead(_ url: URL) -> String { (try? String(contentsOf: url, encoding: .utf8)) ?? "" }
+}

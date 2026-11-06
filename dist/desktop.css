@@ -1,0 +1,143 @@
+/* Mac-specific layout; the native app supplies the platform marker. */
+:root:not([data-platform=mac]) .desktop-only{display:none!important}
+[data-platform=mac] .sidebar{width:218px;padding:27px 16px 18px}
+[data-platform=mac] .workspace{width:calc(100% - 218px);margin-left:218px}
+[data-platform=mac] .brand{font-size:21px;gap:6px;padding:0 7px}
+[data-platform=mac] .brand-mark{width:33px;height:36px}
+[data-platform=mac] .space-label{margin:17px 9px 29px;letter-spacing:1.1px}
+[data-platform=mac] .sidebar-note{display:none}
+[data-platform=mac] .nav-item{font-size:13px;padding:12px 13px;min-height:43px;border-radius:11px}
+[data-platform=mac] .topbar{height:62px;padding:0 30px}
+[data-platform=mac] .header-note{display:none}
+[data-platform=mac] main{padding:28px 30px 0;max-width:1320px}
+[data-platform=mac] h1{font-size:33px;letter-spacing:-1.3px}
+[data-platform=mac] .page-heading{margin-bottom:23px}
+[data-platform=mac] .page-heading p{font-size:13px;margin-top:8px}
+[data-platform=mac] .quick-actions{gap:10px;margin-bottom:18px}
+[data-platform=mac] .quick-actions button{min-height:47px;border-radius:12px}
+[data-platform=mac] .card{border-radius:20px}
+[data-platform=mac] .dashboard-grid{align-items:start}
+[data-platform=mac] .quote-card,[data-platform=mac] .activity-card{display:none}
+[data-platform=mac] .streak-card{align-self:stretch}
+[data-platform=mac] .counter-ring{margin:10px auto;width:256px;height:256px;max-width:100%;flex-shrink:0}
+[data-platform=mac] .counter-ring .days-number{font-size:76px;letter-spacing:-3px}
+[data-platform=mac] .streak-message{margin-bottom:23px}
+[data-platform=mac] .week-card{padding:18px 22px}
+[data-platform=mac] .checkin-card h2{margin-top:14px}
+[data-platform=mac] .moods{margin:13px 0}
+[data-platform=mac] .moods button{min-height:68px}
+[data-platform=mac] .personal-plan .plan-why{font-size:20px;margin:15px 0 20px}
+[data-platform=mac] .personal-plan h2{font-size:21px}
+[data-platform=mac] .local-label{padding-top:17px;margin-top:10px;font-size:10px}
+.command-trigger{display:flex;align-items:center;gap:8px;border:1px solid var(--border);padding:7px 9px;border-radius:9px;font-size:11px;color:var(--muted);background:var(--card)}
+.command-trigger svg{width:14px;height:14px}
+kbd{font:10px -apple-system,BlinkMacSystemFont,sans-serif;color:var(--muted);border:1px solid var(--border);background:var(--subtle);border-radius:5px;padding:3px 5px;white-space:nowrap}
+.calendar-card{margin-top:20px}
+.calendar-card h2{font-size:22px;margin-top:10px}
+.calendar-navigation{display:flex;align-items:center;gap:4px}
+.calendar-navigation .icon-button{width:32px;height:32px;font-size:25px}
+.calendar-navigation .text-button{font-size:11px}
+.calendar-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,1fr);gap:35px;margin-top:25px}
+#calendar-month{font-size:15px;letter-spacing:-.2px;margin-bottom:17px}
+.calendar-weekdays,.calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.calendar-weekdays{font-size:10px;text-align:center;color:var(--muted);margin-bottom:8px}
+.calendar-day{position:relative;min-height:41px;border-radius:10px;color:var(--secondary);font-size:12px;padding:9px 0 14px;border:1px solid transparent;font-variant-numeric:tabular-nums}
+.calendar-day:hover{background:var(--subtle);border-color:var(--border)}
+.calendar-day.has-record{background:var(--active-surface);color:var(--text)}
+.calendar-day.has-record:after{content:'';width:4px;height:4px;background:#88a86e;border-radius:50%;position:absolute;bottom:6px;left:calc(50% - 2px)}
+.calendar-day.is-today{border-color:var(--pine);font-weight:650}
+.calendar-day.outside{opacity:.3}
+.calendar-day:disabled{opacity:.25;cursor:default;background:none}
+.calendar-guide{border-left:1px solid var(--border);padding-left:26px;align-self:stretch;display:flex;flex-direction:column;justify-content:center}
+.calendar-guide-icon{color:var(--pine);margin-bottom:15px}.calendar-guide-icon svg{width:26px;height:26px}
+.calendar-guide h3{font:22px/1.3 Georgia,serif;max-width:210px}
+.calendar-guide p{font-size:12px;color:var(--muted);margin:13px 0 20px}
+.calendar-guide>span:not(.calendar-guide-icon){display:flex;align-items:center;gap:7px;font-size:11px;color:var(--secondary)}
+.calendar-guide i{width:6px;height:6px;background:#88a86e;border-radius:50%}
+.calendar-guide small{font-size:10px;color:var(--muted);margin-top:10px;line-height:1.6}
+#calendar-summary{font-size:11px;color:var(--secondary);border-top:1px solid var(--border);margin-top:20px;padding-top:15px}
+.day-summary{display:flex;gap:9px;flex-wrap:wrap;margin:22px 0}
+.day-summary span{font-size:12px;color:var(--secondary);background:var(--subtle);padding:9px 12px;border-radius:9px}
+.day-moment{padding:17px 0;border-top:1px solid var(--border)}.day-moment p{white-space:pre-wrap;font-size:14px;margin-top:10px;color:var(--text)}
+.day-moment .entry-meta{margin-bottom:0}
+.command-list{display:flex;flex-direction:column;gap:4px;max-height:350px;overflow:auto;margin-top:16px}
+.command-option{display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:48px;padding:10px 12px;border:1px solid transparent;border-radius:11px;font-size:13px}
+.command-option kbd{margin-left:auto}.command-option svg{width:18px;height:18px;color:var(--secondary)}
+.command-option:hover,.command-option[aria-selected=true]{background:var(--active-surface);border-color:var(--border)}
+.shortcuts-list{display:grid;grid-template-columns:1fr auto;gap:16px 20px;margin:25px 0;font-size:13px;align-items:center}.shortcuts-list kbd{font-size:12px}
+.recovery-copy{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--border);font-size:13px}.recovery-copy .button{font-size:12px;min-height:38px;padding:8px 13px}.recovery-copy small{display:block;color:var(--muted);font-size:11px;margin-top:5px}
+.import-preview{margin:20px 0;padding:4px 18px;border:1px solid var(--border);border-radius:14px;background:var(--subtle)}.import-preview>div{padding:13px 0}.import-preview b{font-size:14px;font-weight:550}.import-preview small{display:block;color:var(--muted);font-size:11px;margin-top:7px}.import-preview p{font-size:12px;color:var(--muted);padding-bottom:14px}
+@media(min-width:1051px){
+[data-platform=mac] .dashboard-grid{grid-template-columns:1fr 1fr;grid-template-areas:'streak week' 'streak checkin' 'intentions plan';gap:18px}
+[data-platform=mac] .right-stack{display:contents}
+[data-platform=mac] .streak-card{grid-area:streak}
+[data-platform=mac] .week-card{grid-area:week}
+[data-platform=mac] .checkin-card{grid-area:checkin}
+[data-platform=mac] .goals-card{grid-area:intentions;align-self:stretch}
+[data-platform=mac] .dashboard-grid>.personal-plan{grid-area:plan;align-self:stretch}
+}
+@media(max-width:1050px){
+[data-platform=mac] .sidebar{width:190px;padding-left:12px;padding-right:12px}
+[data-platform=mac] .workspace{margin-left:190px;width:calc(100% - 190px)}
+[data-platform=mac] .brand{font-size:19px;gap:4px;padding:0 4px}
+[data-platform=mac] main{padding:24px 23px 0}
+[data-platform=mac] .topbar{padding:0 23px}
+[data-platform=mac] .dashboard-grid{grid-template-columns:minmax(0,1fr)}
+[data-platform=mac] .dashboard-grid>.personal-plan{grid-column:auto}
+[data-platform=mac] .counter-ring{width:240px;height:240px}
+[data-platform=mac] .streak-card{min-height:440px}
+[data-platform=mac] .topbar-right{gap:12px}
+.command-trigger{font-size:0;gap:4px}.command-trigger kbd{font-size:10px}
+.calendar-layout{grid-template-columns:minmax(0,1fr);gap:20px}
+.calendar-guide{border-left:0;border-top:1px solid var(--border);padding:18px 0 0}.calendar-guide-icon,.calendar-guide h3,.calendar-guide p,.calendar-guide small{display:none}
+.calendar-card .card-top{align-items:flex-start;gap:5px}.calendar-card h2{font-size:20px}
+}
+@media(prefers-reduced-motion:no-preference){[data-platform=mac] .view{animation:desktop-enter .22s ease-out}@keyframes desktop-enter{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}}
+
+[data-platform=mac] .web-nav-today{display:none}
+[data-platform=mac] .nav-tools-label{margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
+[data-platform=mac] .sidebar-bottom{margin-top:auto}
+[data-platform=mac] .brand-mark{width:36px;height:36px}
+[data-platform=mac] .brand-mark svg{width:19px;height:19px}
+[data-platform=mac] #habit-history-panel{margin-top:22px;padding:20px}
+[data-platform=mac] #habit-history-panel>summary{font-size:14px;font-weight:600;cursor:pointer}
+[data-platform=mac] #habit-history-panel[open]>summary{margin-bottom:18px}
+[data-platform=mac] #habit-insights .stats-grid{margin-block:16px}
+[data-platform=mac] .habit-toolbar{gap:8px;flex-wrap:wrap}
+[data-platform=mac] .habit-toolbar>.text-button:first-of-type{margin-inline-start:auto}
+
+/* First launch and permission review */
+#modal:has(#permission-setup){width:min(660px,calc(100vw - 48px))}
+#permission-setup .permission-intro{padding:2px 0 14px}
+.permission-kicker{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:650;letter-spacing:.12em;color:var(--secondary)}
+.permission-kicker svg{width:13px;height:13px}
+#permission-setup h2{font-size:32px;letter-spacing:-.04em;margin:10px 0}
+.permission-intro p,.permission-note{font-size:12px;color:var(--secondary);line-height:1.6}
+.permission-row{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border)}
+.permission-icon{display:grid;place-items:center;width:32px;height:32px;background:var(--subtle);border-radius:9px}
+.permission-icon svg{width:16px;height:16px}
+.permission-row h3{font-size:12px;font-weight:650;margin-bottom:3px}
+.permission-row p{font-size:11px;line-height:1.5;color:var(--muted)}
+.permission-row .button{font-size:11px;min-height:34px;padding:6px 10px;white-space:nowrap}
+.permission-row .button:disabled{opacity:.6;cursor:default}
+.permission-note{border-top:1px solid var(--border);padding-top:10px}
+
+.setup-brand{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:650;letter-spacing:-.03em}
+.setup-brand>span{display:grid;place-items:center;width:28px;height:28px;background:var(--text);color:var(--bg);border-radius:8px}
+.setup-brand svg{width:16px;height:16px}
+.setup-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;list-style:none;margin:16px 0 20px;padding:0}
+.setup-steps li{border-top:2px solid var(--border);padding-top:8px;color:var(--muted);font-size:10px}
+.setup-steps li span{font-size:9px;margin-right:4px;font-variant-numeric:tabular-nums}
+.setup-steps li[aria-current=step]{border-color:var(--text);color:var(--text);font-weight:650}
+.setup-panel h2:focus{outline:none}
+.setup-workflow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:0 0 14px}
+.setup-workflow article{padding:12px;background:var(--raised);border:1px solid var(--border);border-radius:12px}
+.setup-workflow article>span{display:block;color:var(--secondary)}
+.setup-workflow svg{width:18px;height:18px}
+.setup-workflow h3{font-size:12px;margin:8px 0 4px}
+.setup-workflow p{font-size:11px;line-height:1.5;color:var(--muted)}
+.setup-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}
+.setup-actions>div{display:flex;align-items:center;gap:8px}
+.setup-actions .button{min-height:40px;font-size:12px;padding:8px 13px}
+.setup-actions .button svg{width:15px;height:15px}
+.setup-actions .text-button{font-size:11px}

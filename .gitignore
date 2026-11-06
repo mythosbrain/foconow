@@ -1,0 +1,9 @@
+.DS_Store
+node_modules/
+*.tar.gz
+.openai/local/
+releases/
+verification/
+Apple/WebContent/
+
+__pycache__/
