@@ -23,6 +23,6 @@ let html = fs.readFileSync(path.join(source, 'index.html'), 'utf8')
   .replace('<script type="module" src="app.js"></script>', '<script defer src="app.bundle.js"></script>');
 html = html.replace('<meta name="viewport" content="width=device-width, initial-scale=1">', '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">');
 fs.writeFileSync(path.join(output, 'index.html'), html);
-for (const name of ['styles.css', 'appearance.css', 'premium.css', 'desktop.css', 'noir.css', 'tasks.css', 'controls.css', 'insights.css', 'phone.css', 'controls.js', 'icon.svg']) fs.copyFileSync(path.join(source, name), path.join(output, name));
+for (const name of ['styles.css', 'appearance.css', 'premium.css', 'desktop.css', 'noir.css', 'tasks.css', 'controls.css', 'insights.css', 'phone.css', 'glass.css', 'controls.js', 'icon.svg']) fs.copyFileSync(path.join(source, name), path.join(output, name));
 generateAlarmSounds(output);
 console.log(`Prepared offline native assets in ${output}`);

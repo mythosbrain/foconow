@@ -61,3 +61,22 @@ export function focusDuration(seconds, precise = false) {
   if (seconds>0 && minutes===0) return precise ? `${Math.floor(seconds)}s` : '<1m';
   return hours ? `${hours}h ${String(minutes%60).padStart(2,'0')}m` : `${minutes}m`;
 }
+
+// A carried task keeps its origin, so earlier focus counts toward its estimate.
+export function taskWorkload(timer, tasks, now = Date.now()) {
+  const spent = new Map();
+  for (const span of focusIntervals(timer, now)) {
+    if (span.taskId) spent.set(span.taskId, (spent.get(span.taskId) || 0) + (span.end - span.start) / 1000);
+  }
+  const minutes = Number(timer.settings?.work) || 25;
+  const open = tasks.filter(task => !task.done);
+  const remaining = open.map(task => ({
+    ...task, seconds: Math.max(0, (task.estimate || 1) * minutes * 60 - (spent.get(task.originId) || 0))
+  }));
+  return {
+    open: open.length, priorities: open.filter(task => task.priority).length,
+    seconds: remaining.reduce((total, task) => total + task.seconds, 0),
+    overEstimate: remaining.filter(task => task.seconds === 0).length,
+    next: open.find(task => task.priority) || open[0] || null
+  };
+}

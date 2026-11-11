@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.15.2.dmg?layout=2"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
+  <a href="https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
 </p>
 
 <p align="center"><strong>Apple silicon</strong> · macOS 13 or later · Free preview</p>
@@ -20,14 +20,23 @@
   <a href="#build-from-source">Build from source</a>
 </p>
 
-![My Day in FocoNow with daily priorities, upcoming tasks, a focus timer, and a review editor](docs/images/my-day.jpg)
+![My Day in FocoNow with daily priorities, upcoming tasks, a focus timer, and a review editor](docs/images/my-day.png)
+
+## New in 1.17
+
+- **A glass workspace:** translucent panels, crisp controls, and balanced light and dark themes.
+- **Plan at a glance:** estimated focus time left, with earlier work on carried tasks included.
+- **Focus next:** start the first unfinished priority without searching your list.
+- **Distraction-free focus:** a quiet timer view that stays in sync with the menu bar. Press Escape to return.
+
+![Distraction-free focus in FocoNow](docs/images/focus-room.png)
 
 ## Your daily workspace
 
 | Workspace | What you can do |
 | :--- | :--- |
 | **My Day** | Set your main priority, plan your tasks, and bring unfinished work forward when you need it. |
-| **Tasks & Focus** | Prioritize tasks, add notes, and start a Pomodoro. The timer keeps running in the menu bar when you close the main window. |
+| **Tasks & Focus** | See your estimated focus time left, start your next priority, and open a distraction-free timer. The timer keeps running in the menu bar when you close the main window. |
 | **Journal & Insights** | Write a short daily review, then see where your focus time went and how your tasks progressed. |
 | **Desktop widgets** | Check your timer, upcoming tasks, or a streak at a glance. Requires macOS 14 or later. |
 
@@ -35,19 +44,19 @@
 
 | Tasks & Focus | Insights |
 | :---: | :---: |
-| ![Task priorities beside the Pomodoro timer](docs/images/tasks-focus.jpg) | ![Daily focus time and completed sessions in Insights](docs/images/insights.jpg) |
+| ![Task priorities beside the Pomodoro timer](docs/images/tasks-focus.png) | ![Daily focus time and completed sessions in Insights](docs/images/insights.png) |
 
 *Screenshots show sample data.*
 
 ## Install on Mac
 
-1. Download [FocoNow v1.15.2 for Apple silicon](https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.15.2.dmg?layout=2).
+1. Download [FocoNow v1.17.0 for Apple silicon](https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0.dmg).
 2. Open the DMG and drag **FocoNow.app** onto the **Applications** shortcut.
 3. Launch FocoNow from Applications. Follow the welcome walkthrough or select **Skip setup** to open My Day.
 
 This preview uses local signing. macOS may ask you to approve the app under **System Settings → Privacy & Security**. [Apple’s instructions for opening apps](https://support.apple.com/102445)
 
-[Download page](https://mythosbrain.github.io/foconow-site/) · [Preview release notes](https://github.com/mythosbrain/foconow/releases/tag/v1.15.2)
+[Download page](https://mythosbrain.github.io/foconow-site/) · [Preview release notes](https://github.com/mythosbrain/foconow/releases/tag/v1.17.0)
 
 ## Privacy and permissions
 
@@ -81,6 +90,10 @@ npm run check
 bash scripts/build-mac.sh
 ~~~
 
+To create the branded drag-to-install DMG, run `bash scripts/build-dmg.sh` after building the app. Its first run installs the pinned packaging tools into `releases/.dmg-tools`. The output includes a SHA-256 checksum beside the DMG.
+
 The build bundles the offline web interface inside a native SwiftUI and WebKit app, signs it locally, and writes the app and ZIP to `releases/`. In Xcode, open `Apple/HabitCounter.xcodeproj` and select the `HabitCounterMac` scheme.
+
+Version tags publish the verified DMG and its checksum through the repository’s release workflow. The manifest pins the installer to an immutable website commit; no personal access token is required.
 
 For native verification, run `bash scripts/check-screen-time.sh` and `bash scripts/check-widgets.sh`. The project also includes an experimental iPhone target with [separate signing requirements](Apple/SCREEN-TIME-SETUP.md).

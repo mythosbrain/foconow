@@ -387,6 +387,43 @@ final class SmokeRunner: NSObject, NSApplicationDelegate {
     func taskScreens() {
         window.setContentSize(NSSize(width: 1280, height: 850))
         evaluate("location.hash='tasks'") {
+            self.expect("document.querySelector('#workload-time').textContent !== '0m' && !document.querySelector('#focus-next-task').disabled", "Task workload shows remaining estimates and offers a next task") {
+                self.evaluate("document.querySelector('#focus-next-task').click()") {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        self.expect("document.querySelector('#pomo-start-label').textContent === 'Pause' && document.querySelector('#focus-next-task').disabled", "Focus next starts the native timer and prevents replacing an active session") {
+                            self.evaluate("document.querySelector('#open-focus-room').click()") {
+                                self.expect("document.querySelector('#focus-room').open && document.querySelectorAll('#pomo-clock').length === 1 && document.querySelector('#focus-room #pomo-clock') !== null", "Distraction-free focus reuses the original timer with no duplicate clock") {
+                                    self.capture("focus-room-dark.png") {
+                                        self.evaluate("document.querySelector('#pomo-start').click()") {
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                                self.expect("document.querySelector('#pomo-start-label').textContent === 'Resume'", "Focus room pauses the native timer") {
+                                                    self.evaluate("document.querySelector('#pomo-reset').click()") {
+                                                        self.expect("document.querySelector('#modal').open && document.querySelector('#focus-room').open", "Ending a session asks for confirmation above the focus view") {
+                                                            self.evaluate("document.querySelector('#confirm-pomo-reset').click();document.querySelector('#close-focus-room').click()") {
+                                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                                                    self.expect("!document.querySelector('#focus-room').open && document.querySelector('.pomodoro-column #pomo-clock') !== null && document.querySelector('#pomo-start-label').textContent === 'Start focus'", "Leaving focus view restores the task workspace and shared timer controls") {
+                                                                        self.taskScreensAfterFocusRoom()
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    func taskScreensAfterFocusRoom() {
+        window.setContentSize(NSSize(width: 1280, height: 850))
+        evaluate("location.hash='tasks'") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 self.expect("!document.querySelector('#tasks-view').hidden && document.querySelector('#planner-view').hidden && document.querySelector('#pomo-start').getBoundingClientRect().bottom <= innerHeight", "Tasks and Pomodoro have a separate page with timer controls visible at desktop size") {
                     self.capture("tasks-focus-dark.png") {
@@ -515,12 +552,12 @@ final class SmokeRunner: NSObject, NSApplicationDelegate {
                 self.expect("!document.querySelector('#phone-settings-access').hidden && document.querySelector('#phone-settings-message').textContent.includes('Diagnostic mode')", "Settings reader presents an Accessibility permission state and never reads personal windows in diagnostics") {
                     self.evaluate("""
                     const date=new Date();const key=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-                    window.dispatchEvent(new CustomEvent('habit-native-event',{detail:{type:'phoneSettingsRead',status:'ready',deviceName:'Sample iPhone 16 Pro Max',date:key,reports:[{deviceName:'Sample iPhone 16 Pro Max',date:key,totalSeconds:46380,capturedAt:Date.now(),apps:[{name:'Instagram',seconds:12600},{name:'YouTube',seconds:11760}]}]}}));window.scrollTo(0,0);
+                    window.dispatchEvent(new CustomEvent('habit-native-event',{detail:{type:'phoneSettingsRead',status:'ready',deviceName:'Sample iPhone',date:key,reports:[{deviceName:'Sample iPhone',date:key,totalSeconds:15900,capturedAt:Date.now(),apps:[{name:'Sample Reader',seconds:3900},{name:'Sample Maps',seconds:2520}]}]}}));window.scrollTo(0,0);
                     """) {
-                        self.expect("document.querySelector('#phone-total').textContent==='12h 53m' && document.querySelector('#phone-total-label').textContent==='TOTAL SHOWN IN SETTINGS' && document.querySelector('#phone-hour-panel').hidden && document.querySelector('#phone-source-settings').getAttribute('aria-pressed')==='true'", "Settings report preserves Apple's displayed total without inventing hourly values or summing an incomplete app list") {
+                        self.expect("document.querySelector('#phone-total').textContent==='4h 25m' && document.querySelector('#phone-total-label').textContent==='TOTAL SHOWN IN SETTINGS' && document.querySelector('#phone-hour-panel').hidden && document.querySelector('#phone-source-settings').getAttribute('aria-pressed')==='true'", "Settings report preserves Apple's displayed total without inventing hourly values or summing an incomplete app list") {
                             self.capture("settings-report-sample-dark.png") {
                                 self.evaluate("document.querySelector('#phone-source-events').click();document.querySelector('#phone-source-settings').click()") {
-                                    self.expect("document.querySelector('#phone-total').textContent==='12h 53m' && document.querySelector('#insight-total').textContent==='8h 10m'", "Switching report sources preserves the Settings snapshot and leaves focus hours unchanged") { self.periodScreens() }
+                                    self.expect("document.querySelector('#phone-total').textContent==='4h 25m' && document.querySelector('#insight-total').textContent==='8h 10m'", "Switching report sources preserves the Settings snapshot and leaves focus hours unchanged") { self.periodScreens() }
                                 }
                             }
                         }
@@ -531,7 +568,7 @@ final class SmokeRunner: NSObject, NSApplicationDelegate {
     }
     func periodScreens() {
         evaluate("""
-        const periodReports=[];for(let i=0;i<30;i++){const d=new Date();d.setDate(d.getDate()-i);const date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;periodReports.push({deviceName:'Sample iPhone 16 Pro Max',date,totalSeconds:(i+1)*60,capturedAt:Date.now(),apps:[{name:'Sample app',seconds:60}]});}
+        const periodReports=[];for(let i=0;i<30;i++){const d=new Date();d.setDate(d.getDate()-i);const date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;periodReports.push({deviceName:'Sample iPhone',date,totalSeconds:(i+1)*60,capturedAt:Date.now(),apps:[{name:'Sample app',seconds:60}]});}
         window.dispatchEvent(new CustomEvent('habit-native-event',{detail:{type:'phoneSettingsReports',reports:periodReports,sync:{enabled:false,running:false,current:0,total:0,message:''}}}));document.querySelector('[data-phone-range="7"]').click();
         """) {
             self.expect("document.querySelector('#phone-total').textContent==='28m' && document.querySelectorAll('[data-phone-day]').length===7 && document.querySelector('#phone-selected-date').textContent.includes('7 / 7')", "Seven-day Settings totals use all daily reports and show complete coverage") {

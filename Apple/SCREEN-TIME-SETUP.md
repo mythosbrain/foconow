@@ -23,11 +23,9 @@ The signer must sign both bundles using the same developer team and preserve `Pl
 
 An Apple Developer team can configure Family Controls development profiles for a registered test device. Distribution requires the relevant Apple capability approval for the app and its Screen Time extension. See [Apple: configuring Family Controls](https://developer.apple.com/documentation/xcode/configuring-family-controls) and [Apple: requesting the entitlement](https://developer.apple.com/documentation/familycontrols/requesting-the-family-controls-entitlement).
 
-## iOSRocket
+## Third-party signing
 
-As checked November 4, 2026, [iOSRocket's published list](https://iosrocket.com/cs/pages/enabled-certificate-entitlements) does not list Family Controls and states that App Groups are not enabled at provisioning level. This suggests its standard certificate/profile is insufficient for this build; the actual profiles or an explicit confirmation from the provider are needed. A certificate that installs ordinary IPAs is not evidence that it authorizes Screen Time.
-
-Ask the provider whether it can provision both explicit App IDs above with Family Controls and the same registered App Group, and sign the embedded Device Activity extension without removing it. No private key or certificate password needs to be shared with Codex for that question.
+Ask the signing provider whether it can provision both explicit App IDs above with Family Controls and the same registered App Group, and sign the embedded Device Activity extension without removing it.
 
 ## Build and inspect
 
@@ -37,7 +35,7 @@ Unsigned build:
 bash scripts/build-ios.sh --unsigned
 ```
 
-The prepared package is `releases/Habit-Counter-iPhone-v1.4-ScreenTime-unsigned.ipa`. It is not proof that iOSRocket can activate the feature.
+Find the unsigned package at `releases/Habit-Counter-iPhone-v1.4-ScreenTime-unsigned.ipa`.
 
 For a team already authorized and configured in Xcode:
 

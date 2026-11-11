@@ -1,5 +1,5 @@
 import { DAY, MILESTONES, uid, dayKey, createHabit, initialState, elapsed, stats, checkIn, resetHabit, activeHabit, replaceHabit, validateState, DEFAULT_INTENTIONS, logUrge, weeklyReview, calendarMonth, dayPlan, updateDayPlan, addDayTask, bringTasksForward } from './model.js';
-import { focusReport, focusDuration, focusIntervals } from './insights.js';
+import { focusReport, focusDuration, focusIntervals, taskWorkload } from './insights.js';
 import { phonePeriod } from './phone-history.js';
 import { createPhoneScreenTime } from './phone-ui.js';
 
@@ -58,7 +58,7 @@ function applyAppearance(preference, persist = false) {
   const theme = preference === 'system' ? (colorSchemeQuery.matches ? 'dark' : 'light') : preference;
   document.documentElement.dataset.appearance = preference;
   document.documentElement.dataset.theme = theme;
-  $('meta[name="theme-color"]').setAttribute('content', isMac ? (theme === 'dark' ? '#000000' : '#f5f5f5') : (theme === 'dark' ? '#0f1612' : '#f5f4ef'));
+  $('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#101114' : '#edf0f5');
   if (persist) {
     try { localStorage.setItem('habit-counter.appearance', preference); } catch {}
     if (nativeHost) nativeHost.postMessage({ action: 'appearance', preference });
@@ -267,6 +267,7 @@ function renderPomodoroTotals() {
   const seconds = focusIntervals(pomodoro).reduce((sum,span)=>sum+Math.max(0,Math.min(+end,span.end)-Math.max(+start,span.start))/1000,0);
   $('#focus-minute-count').textContent = Math.floor(seconds/60);
   $('#day-focus-minutes').textContent = Math.floor(seconds/60);
+  renderWorkload();
 }
 function renderFocusInsights() {
   const report = focusReport(pomodoro,state.planner,insightRange);
@@ -341,6 +342,7 @@ function render() {
   window.HabitControls?.sync();
 }
 function route() {
+  if ($('#focus-room').open) $('#focus-room').close();
   window.HabitControls?.close();
   const requested = location.hash.slice(1);
   currentView = ['overview', 'journal', 'insights', ...(isMac ? ['planner','tasks','phone'] : [])].includes(requested) ? requested : isMac ? 'planner' : 'overview';
@@ -1028,6 +1030,39 @@ function sendPomodoro(operation, extra = {}) {
   if (operation === 'settings') pendingPomoSettings = true;
   nativeHost.postMessage({action:'pomodoro',operation,...extra});
 }
+function renderWorkload() {
+  const workload = taskWorkload(pomodoro, dayPlan(state, plannerDate).tasks);
+  $('#workload-time').textContent = focusDuration(Math.ceil(workload.seconds / 60) * 60);
+  $('#workload-caption').textContent = workload.open ? 'estimated focus left' : 'a clear task list';
+  $('#workload-priorities').textContent = workload.priorities ? `${workload.priorities} ${workload.priorities === 1 ? 'PRIORITY' : 'PRIORITIES'} · UP NEXT` : 'UP NEXT';
+  $('#workload-next').textContent = workload.next?.title || 'Make room for something worthwhile.';
+  $('#workload-note').textContent = !workload.open ? 'Add a task or enjoy a little breathing room.' : workload.overEstimate ? `${workload.overEstimate} ${workload.overEstimate === 1 ? 'task has' : 'tasks have'} reached the estimate. Adjust it or mark the task done.` : 'Based on task estimates and tracked focus. Breaks excluded.';
+  const active = ['running', 'paused'].includes(pomodoro.status);
+  $('#focus-next-task').disabled = !workload.next || active || !!pomodoro.error;
+  $('#focus-next-task').title = active ? 'Finish or end the current session before starting the next task.' : 'Start your first unfinished priority, then follow your task list.';
+}
+function setupFocusRoom() {
+  const room = $('#focus-room'), panel = $('.pomodoro-panel');
+  const anchor = document.createComment('Focus panel home');
+  panel.before(anchor);
+  $('#open-focus-room').addEventListener('click', () => {
+    window.HabitControls?.close();
+    $('#focus-room-timer').append(panel);
+    room.showModal();
+    $('#close-focus-room').focus();
+  });
+  room.addEventListener('close', () => {
+    window.HabitControls?.close();
+    anchor.after(panel);
+    $('#open-focus-room').focus({ preventScroll: true });
+  });
+  $('#close-focus-room').addEventListener('click', () => room.close());
+  $('#focus-next-task').addEventListener('click', () => {
+    if (['running', 'paused'].includes(pomodoro.status)) return;
+    const task = taskWorkload(pomodoro, dayPlan(state, plannerDate).tasks).next;
+    if (task) sendPomodoro('focusTask', {taskId: task.originId, taskDate: plannerDate, taskTitle: task.title});
+  });
+}
 function renderPomodoroClock() {
   const seconds = Math.max(0,Number(pomodoro.remaining) || 0), active = ['running','paused'].includes(pomodoro.status);
   $('#pomo-clock').textContent = `${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
@@ -1078,6 +1113,7 @@ function pomodoroSettingsModal() {
   $('#pomo-settings-form').addEventListener('submit',event=>{ event.preventDefault(); sendPomodoro('settings',{work:Number($('#pomo-setting-work').value),short:Number($('#pomo-setting-short').value),long:Number($('#pomo-setting-long').value),every:Number($('#pomo-setting-every').value)}); });
 }
 function setupPomodoro() {
+  setupFocusRoom();
   $('#pomo-start').addEventListener('click',()=>sendPomodoro(pomodoro.status==='running'?'pause':'start'));
   $('#pomo-reset').addEventListener('click',()=>{
     if (!['running','paused'].includes(pomodoro.status)) { sendPomodoro('reset'); return; }

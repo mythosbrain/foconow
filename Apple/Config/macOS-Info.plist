@@ -6,8 +6,8 @@
   <key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
   <key>CFBundleExecutable</key><string>HabitCounter</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.15.2</string>
-  <key>CFBundleVersion</key><string>23</string>
+  <key>CFBundleShortVersionString</key><string>1.17.0</string>
+  <key>CFBundleVersion</key><string>25</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>com.yassine.habitcounter</string><key>CFBundleURLSchemes</key><array><string>habitcounter</string></array></dict></array>
   <key>LSMinimumSystemVersion</key><string>13.0</string>

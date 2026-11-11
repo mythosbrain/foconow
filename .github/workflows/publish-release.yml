@@ -1,0 +1,54 @@
+name: Publish verified Mac installer
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to publish
+        required: true
+        default: v1.17.0
+permissions:
+  contents: write
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - name: Download and verify the tested installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          gh api "repos/$GH_REPO/contents/release-manifests/$RELEASE_TAG.json?ref=$RELEASE_TAG" \
+            -H 'Accept: application/vnd.github.raw+json' > manifest.json
+          jq -e --arg tag "$RELEASE_TAG" '.tag == $tag' manifest.json
+          asset="FocoNow-Mac-$RELEASE_TAG.dmg"
+          url="$(jq -r '.asset_url' manifest.json)"
+          digest="$(jq -r '.sha256' manifest.json)"
+          [[ "$url" == https://raw.githubusercontent.com/mythosbrain/foconow-site/*/downloads/"$asset" ]]
+          [[ "$digest" =~ ^[a-f0-9]{64}$ ]]
+          curl --fail --location --retry 3 "$url" -o "$asset"
+          printf '%s  %s\n' "$digest" "$asset" > "$asset.sha256"
+          sha256sum --check "$asset.sha256"
+          jq -r '.notes' manifest.json > release-notes.md
+      - name: Publish release with DMG and checksum assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          asset="FocoNow-Mac-$RELEASE_TAG.dmg"
+          title="FocoNow ${RELEASE_TAG#v} for Mac"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "$asset" "$asset.sha256" --clobber
+            gh release edit "$RELEASE_TAG" --title "$title" --notes-file release-notes.md --prerelease
+          else
+            gh release create "$RELEASE_TAG" "$asset" "$asset.sha256" --verify-tag \
+              --title "$title" --notes-file release-notes.md --prerelease
+          fi
