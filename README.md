@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0-setup.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
+  <a href="https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
 </p>
 
 <p align="center"><strong>Apple silicon</strong> · macOS 13 or later · Free preview</p>
@@ -50,7 +50,7 @@
 
 ## Install on Mac
 
-1. Download [FocoNow v1.17.0 for Apple silicon](https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0-setup.dmg).
+1. Download [FocoNow v1.17.0 for Apple silicon](https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0.dmg).
 2. Open the DMG and drag **FocoNow.app** onto the **Applications** shortcut.
 3. Launch FocoNow from Applications. Follow the welcome walkthrough or select **Skip setup** to open My Day.
 
@@ -64,9 +64,22 @@ The current preview is locally signed and **not notarized by Apple**. macOS may 
 
 Your Mac remembers this exception.
 
-**Still blocked? The revised disk image includes an optional first-launch helper.** After dragging FocoNow into Applications, double-click **Open FocoNow.command** inside the DMG. Terminal opens automatically, but you do not type commands. The helper verifies that the installed app matches that installer, then asks for confirmation before removing the downloaded-file quarantine from **FocoNow only** and opening it. Cancel leaves the app unchanged. It does not disable global Mac security or scan for malware.
+**Still blocked? Use the [Copy command button on the installation guide](https://mythosbrain.github.io/foconow-site/#terminal-title).**
 
-Use this only with a trusted official download and only for the verification warning. macOS may require **Privacy & Security → Open Anyway** for the helper itself. It is not a guaranteed approval-free installation; that requires Developer ID signing and Apple notarization. The app remains version 1.17.0; the `-setup` disk image adds installation assistance.
+1. Drag FocoNow into **Applications** first.
+2. Click **Copy command** on the website.
+3. Press **⌘ Space**, type **Terminal**, and press **Return**.
+4. Paste with **⌘ V**, then press **Return**.
+
+The visible command is:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/FocoNow.app" && open "/Applications/FocoNow.app"
+```
+
+Use it only for a trusted official download. It removes downloaded-file quarantine from FocoNow only, then opens it; it does not scan for malware or disable global Mac security. If copying is blocked in your browser, select the command and press **⌘ C**.
+
+Older disk images included `Open FocoNow.command`. macOS can block that helper too, so it is no longer the recommended installation path.
 
 Don’t see **Open Anyway**? Try opening the app again, then return to Privacy & Security. A work or school Mac may require help from its administrator.
 
