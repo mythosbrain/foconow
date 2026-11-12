@@ -17,13 +17,11 @@ fi
 mkdir -p "$ART"
 swiftc -module-cache-path "$ROOT/releases/.swift-module-cache" "$ROOT/scripts/dmg/background.swift" -o "$ART/render"
 "$ART/render" "$ART"
-# Finder opens this standard web shortcut to the copyable first-launch guide.
-cp "$ROOT/scripts/installer/Copy opening command.webloc" "$ART/Copy opening command.webloc"
-cp "$ROOT/scripts/installer/First-launch.txt" "$ART/First launch.txt"
+cp "$ROOT/scripts/installer/Copy command.html" "$ART/Copy command.html"
 SUFFIX="${FOCONOW_DMG_SUFFIX:-}"
 [[ "$SUFFIX" =~ ^[a-zA-Z0-9-]*$ ]] || { echo 'Invalid DMG suffix' >&2; exit 1; }
 DMG="$ROOT/releases/FocoNow-Mac-v$VERSION$SUFFIX.dmg"
-"$VENV/bin/dmgbuild" -s "$ROOT/scripts/dmg/settings.py" "-Dapp=$APP" "-Dbackground=$ART/background.png" "-Dshortcut=$ART/Copy opening command.webloc" "-Dguide=$ART/First launch.txt" FocoNow "$DMG"
+"$VENV/bin/dmgbuild" -s "$ROOT/scripts/dmg/settings.py" "-Dapp=$APP" "-Dbackground=$ART/background.png" "-Dpanel=$ART/Copy command.html" FocoNow "$DMG"
 hdiutil verify "$DMG"
 (cd "$ROOT/releases" && shasum -a 256 "FocoNow-Mac-v$VERSION$SUFFIX.dmg" > "FocoNow-Mac-v$VERSION$SUFFIX.dmg.sha256")
 echo "Installer: $DMG"

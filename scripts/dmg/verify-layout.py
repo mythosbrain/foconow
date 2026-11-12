@@ -16,13 +16,12 @@ with DSStore.open(str(mount / ".DS_Store"), "r") as layout:
     assert not bounds["ShowToolbar"] and not bounds["ShowSidebar"]
     assert layout["FocoNow.app"]["Iloc"] == (206, 221)
     assert layout["Applications"]["Iloc"] == (514, 221)
-    assert layout["Copy opening command.webloc"]["Iloc"] == (250, 440)
-    assert layout["First launch.txt"]["Iloc"] == (470, 440)
-    import plistlib
-    shortcut = plistlib.loads((mount / "Copy opening command.webloc").read_bytes())
-    assert shortcut["URL"] == "https://mythosbrain.github.io/foconow-site/#terminal-title"
+    assert layout["Copy command.html"]["Iloc"] == (250, 430)
+    assert layout["Open Terminal"]["Iloc"] == (470, 430)
+    assert (mount / "Open Terminal").readlink() == Path("/System/Applications/Utilities/Terminal.app")
+    assert 'id="copy"' in (mount / "Copy command.html").read_text()
+    assert not (mount / "First launch.txt").exists()
     assert not (mount / "Open FocoNow.command").exists()
-    assert (mount / "First launch.txt").is_file()
     target = Alias.from_bytes(view["backgroundImageAlias"]).target
     background = mount / target.filename
     assert background.is_file() and background.suffix == ".tiff"
