@@ -1,25 +1,28 @@
-FocoNow — first launch
+FocoNow — installation and first launch
 
 1. Drag FocoNow into Applications.
 2. Open FocoNow from Applications.
 3. If Apple cannot verify it, go to System Settings > Privacy & Security,
    find FocoNow, click Open Anyway, then confirm Open.
 
-Optional helper (no commands to type)
+If the verification warning keeps appearing:
 
-If the verification warning keeps appearing, double-click Open FocoNow.command
-inside this disk image. Terminal opens automatically. The helper checks that
-/Applications/FocoNow.app matches this installer and asks for confirmation
-before removing its downloaded-file quarantine and opening the app.
+Double-click "Copy opening command" in this disk image. Your browser opens
+our guide with a Copy command button. Click Copy command, press Command-Space,
+type Terminal, press Return, paste with Command-V, then press Return.
 
-Continue only if you trust this installer from the official website or GitHub.
-The helper does not scan for malware or change global Mac security settings.
-Do not use it for an alert saying the app contains malware or will damage your Mac.
+Offline? Copy this entire line instead:
 
-macOS may also block the helper. Approve that file using Privacy & Security >
-Open Anyway if you trust it. There is no guaranteed approval-free installation
-until FocoNow is signed with Developer ID and notarized by Apple.
+xattr -dr com.apple.quarantine "/Applications/FocoNow.app" && open "/Applications/FocoNow.app"
 
-Official website: https://mythosbrain.github.io/foconow-site/
-Source and releases: https://github.com/mythosbrain/foconow
+Only use this for a copy you trust from the official website or GitHub.
+This removes downloaded-file quarantine from FocoNow only and opens it.
+It does not scan for malware or turn off global Mac security.
+If the alert says the app contains malware or will damage your Mac, stop.
+
+This preview is not yet notarized by Apple. The web shortcut is a link to
+instructions, not an executable installer or automatic approval tool.
+
+Guide: https://mythosbrain.github.io/foconow-site/#terminal-title
+Source: https://github.com/mythosbrain/foconow
 Apple help: https://support.apple.com/102445

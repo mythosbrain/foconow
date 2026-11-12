@@ -98,7 +98,8 @@ func draw(scale: Int, to url: URL) throws {
     line([(365, 211), (375, 221), (365, 231)], white: 0.93, width: 2.3)
 
     line([(34, 324), (686, 324)], white: 0.17)
-    label("Trouble opening? Optional helper and first-launch guide", x: 360, top: 345, pointSize: 14, weight: .medium, white: 0.75, centered: true)
+    label("Apple could not verify FocoNow?", x: 360, top: 344, pointSize: 17, weight: .semibold, white: 0.92, centered: true)
+    label("Double-click Copy opening command below. Copy, open Terminal, paste, Return.", x: 360, top: 373, pointSize: 12, weight: .regular, white: 0.72, centered: true)
     label("Make your time count.", x: 360, top: 520, pointSize: 38, weight: .semibold, white: 0.98, tracking: -1.55, centered: true)
     label("A daily workspace for Mac.", x: 360, top: 570, pointSize: 14, weight: .regular, white: 0.65, centered: true)
 
