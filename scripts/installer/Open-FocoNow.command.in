@@ -1,0 +1,32 @@
+#!/bin/bash
+set -euo pipefail
+APP='/Applications/FocoNow.app'
+EXPECTED_CDHASH='@CDHASH@'
+fail() {
+  /usr/bin/osascript - "$1" <<'APPLESCRIPT'
+on run argv
+  display dialog (item 1 of argv) with title "FocoNow first launch" buttons {"OK"} default button "OK" with icon caution
+end run
+APPLESCRIPT
+  exit 1
+}
+check_app() {
+  [[ -d "$APP" && ! -L "$APP" ]] || fail 'Drag FocoNow into Applications first, then open this helper again.'
+  [[ -z "$(/usr/bin/find "$APP" -type l -print -quit)" ]] || fail 'This app contains unexpected links. Download a fresh copy from the official FocoNow release.'
+  /usr/bin/codesign --verify --deep --strict "$APP" 2>/dev/null || fail 'FocoNow failed its integrity check. Download a fresh copy from the official release.'
+  local actual
+  actual="$(/usr/bin/codesign -d --verbose=4 "$APP" 2>&1 | /usr/bin/sed -n 's/^CDHash=//p')"
+  [[ "$actual" == "$EXPECTED_CDHASH" ]] || fail 'This helper is for a different FocoNow version. Use the helper from the same installer as your installed app.'
+}
+check_app
+if ! /usr/bin/osascript <<'APPLESCRIPT'
+display dialog "Open the trusted FocoNow preview?\n\nThis helper removes the downloaded-file quarantine from /Applications/FocoNow.app only, then opens it. It does not change global Mac security settings or scan the app for malware.\n\nContinue only if you trust this installer from the official FocoNow website or GitHub release." with title "FocoNow first launch" buttons {"Cancel", "Open FocoNow"} default button "Cancel" cancel button "Cancel" with icon caution
+APPLESCRIPT
+then
+  exit 0
+fi
+# Recheck after confirmation, before making any change.
+check_app
+/usr/bin/xattr -dr com.apple.quarantine "$APP" || fail 'macOS did not allow this change. Use System Settings → Privacy & Security → Open Anyway, or contact your Mac administrator.'
+/usr/bin/open "$APP" || fail 'FocoNow could not open. Please report the issue on the official GitHub repository.'
+printf '\nFocoNow opened. You can close this Terminal window.\n'

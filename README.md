@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
+  <a href="https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0-setup.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
 </p>
 
 <p align="center"><strong>Apple silicon</strong> · macOS 13 or later · Free preview</p>
@@ -50,7 +50,7 @@
 
 ## Install on Mac
 
-1. Download [FocoNow v1.17.0 for Apple silicon](https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0.dmg).
+1. Download [FocoNow v1.17.0 for Apple silicon](https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0-setup.dmg).
 2. Open the DMG and drag **FocoNow.app** onto the **Applications** shortcut.
 3. Launch FocoNow from Applications. Follow the welcome walkthrough or select **Skip setup** to open My Day.
 
@@ -62,7 +62,11 @@ The current preview is locally signed and **not notarized by Apple**. macOS may 
 2. Go to **System Settings → Privacy & Security** and scroll to **Security**.
 3. Find the message about FocoNow, click **Open Anyway**, authenticate if asked, then confirm **Open**.
 
-Your Mac remembers this exception. **No Terminal commands or disabling Gatekeeper are needed.**
+Your Mac remembers this exception.
+
+**Still blocked? The revised disk image includes an optional first-launch helper.** After dragging FocoNow into Applications, double-click **Open FocoNow.command** inside the DMG. Terminal opens automatically, but you do not type commands. The helper verifies that the installed app matches that installer, then asks for confirmation before removing the downloaded-file quarantine from **FocoNow only** and opening it. Cancel leaves the app unchanged. It does not disable global Mac security or scan for malware.
+
+Use this only with a trusted official download and only for the verification warning. macOS may require **Privacy & Security → Open Anyway** for the helper itself. It is not a guaranteed approval-free installation; that requires Developer ID signing and Apple notarization. The app remains version 1.17.0; the `-setup` disk image adds installation assistance.
 
 Don’t see **Open Anyway**? Try opening the app again, then return to Privacy & Security. A work or school Mac may require help from its administrator.
 

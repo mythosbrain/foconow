@@ -1,7 +1,7 @@
 import AppKit
 
 let width = 720
-let height = 460
+let height = 588
 let size = CGSize(width: width, height: height)
 
 func gray(_ white: CGFloat, alpha: CGFloat = 1) -> NSColor {
@@ -98,8 +98,9 @@ func draw(scale: Int, to url: URL) throws {
     line([(365, 211), (375, 221), (365, 231)], white: 0.93, width: 2.3)
 
     line([(34, 324), (686, 324)], white: 0.17)
-    label("Make your time count.", x: 360, top: 346, pointSize: 38, weight: .semibold, white: 0.98, tracking: -1.55, centered: true)
-    label("A daily workspace for Mac.", x: 360, top: 400, pointSize: 14, weight: .regular, white: 0.65, centered: true)
+    label("Trouble opening? Optional helper and first-launch guide", x: 360, top: 345, pointSize: 14, weight: .medium, white: 0.75, centered: true)
+    label("Make your time count.", x: 360, top: 520, pointSize: 38, weight: .semibold, white: 0.98, tracking: -1.55, centered: true)
+    label("A daily workspace for Mac.", x: 360, top: 570, pointSize: 14, weight: .regular, white: 0.65, centered: true)
 
     let bitmap = NSBitmapImageRep(cgImage: context.makeImage()!)
     bitmap.size = size

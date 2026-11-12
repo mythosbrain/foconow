@@ -12,10 +12,14 @@ with DSStore.open(str(mount / ".DS_Store"), "r") as layout:
     bounds = layout["."]["bwsp"]
     assert view["backgroundType"] == 2
     assert view["iconSize"] == 90
-    assert "720" in bounds["WindowBounds"] and "492" in bounds["WindowBounds"]
+    assert "720" in bounds["WindowBounds"] and "620" in bounds["WindowBounds"]
     assert not bounds["ShowToolbar"] and not bounds["ShowSidebar"]
     assert layout["FocoNow.app"]["Iloc"] == (206, 221)
     assert layout["Applications"]["Iloc"] == (514, 221)
+    assert layout["Open FocoNow.command"]["Iloc"] == (250, 420)
+    assert layout["First launch.txt"]["Iloc"] == (470, 420)
+    assert (mount / "Open FocoNow.command").stat().st_mode & 0o111
+    assert (mount / "First launch.txt").is_file()
     target = Alias.from_bytes(view["backgroundImageAlias"]).target
     background = mount / target.filename
     assert background.is_file() and background.suffix == ".tiff"

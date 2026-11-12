@@ -1,0 +1,25 @@
+FocoNow — first launch
+
+1. Drag FocoNow into Applications.
+2. Open FocoNow from Applications.
+3. If Apple cannot verify it, go to System Settings > Privacy & Security,
+   find FocoNow, click Open Anyway, then confirm Open.
+
+Optional helper (no commands to type)
+
+If the verification warning keeps appearing, double-click Open FocoNow.command
+inside this disk image. Terminal opens automatically. The helper checks that
+/Applications/FocoNow.app matches this installer and asks for confirmation
+before removing its downloaded-file quarantine and opening the app.
+
+Continue only if you trust this installer from the official website or GitHub.
+The helper does not scan for malware or change global Mac security settings.
+Do not use it for an alert saying the app contains malware or will damage your Mac.
+
+macOS may also block the helper. Approve that file using Privacy & Security >
+Open Anyway if you trust it. There is no guaranteed approval-free installation
+until FocoNow is signed with Developer ID and notarized by Apple.
+
+Official website: https://mythosbrain.github.io/foconow-site/
+Source and releases: https://github.com/mythosbrain/foconow
+Apple help: https://support.apple.com/102445
