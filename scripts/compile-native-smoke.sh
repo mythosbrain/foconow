@@ -11,7 +11,7 @@ swiftc -parse-as-library -swift-version 5 \
   -sdk "$(xcrun --sdk macosx --show-sdk-path)" -target "$(uname -m)-apple-macosx13.0" \
   "${COMPAT[@]}" -module-cache-path "$CACHE" \
   -framework SwiftUI -framework WidgetKit -framework ServiceManagement -framework WebKit -framework UniformTypeIdentifiers -framework UserNotifications -framework ApplicationServices -lsqlite3 -lz \
-  "$ROOT/Apple/Tests/NativeSmoke.swift" \
+  "${FOCONOW_NATIVE_CHECK_SOURCE:-$ROOT/Apple/Tests/NativeSmoke.swift}" \
   "$ROOT/Apple/Shared/WebHost.swift" \
   "$ROOT/Apple/Shared/NativeStore.swift" \
   "$ROOT/Apple/Shared/DesktopTools.swift" \
@@ -19,6 +19,7 @@ swiftc -parse-as-library -swift-version 5 \
   "$ROOT/Apple/Shared/WidgetSummary.swift" \
   "$ROOT/Apple/Shared/WidgetPublisher.swift" \
   "$ROOT/Apple/Shared/Pomodoro.swift" \
+  "$ROOT/Apple/Shared/ReminderSupport.swift" \
   "$ROOT/Apple/Shared/ScreenTimeReader.swift" \
   "$ROOT/Apple/Shared/IPhoneScreenTime.swift" \
   "$ROOT/Apple/Shared/PhoneScreenTimeController.swift" \

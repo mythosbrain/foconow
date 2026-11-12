@@ -364,3 +364,14 @@ body::before {
 .runway-estimate{grid-row:1 / span 2}
 #focus-next-task{grid-column:2;grid-row:2}
 @media(max-width:650px){.runway-estimate{grid-row:auto}#focus-next-task{grid-column:1;grid-row:auto}}
+
+/* Local notifications: calm settings and a completion card that never steals focus. */
+.notification-card{padding:22px;margin:16px 0;border:1px solid var(--border);border-radius:22px;background:var(--surface,rgba(255,255,255,.035))}
+.notification-card h3{margin:10px 0;font-size:20px;letter-spacing:-.5px}
+.notification-card p,.notification-caption{color:var(--muted);font-size:13px;line-height:1.65}
+.notification-card .reminder-toggle{padding:16px 0}.notification-card .reminder-toggle small{max-width:380px}
+.notification-tools{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.completion-notice{position:fixed;bottom:28px;right:28px;z-index:90;width:min(420px,calc(100vw - 32px));padding:24px;border-radius:26px;border:1px solid var(--border);background:var(--card,#161616);color:var(--text);box-shadow:0 18px 70px #0006}
+.completion-notice>[role=status]{display:flex;gap:16px;align-items:flex-start}.completion-mark{display:grid;place-items:center;background:var(--text);color:var(--bg);border-radius:50%;width:40px;height:40px;flex-shrink:0}.completion-mark svg{width:20px;height:20px}
+.completion-notice h3{font-size:21px;line-height:1.2;letter-spacing:-.6px;margin:8px 0}.completion-notice p{font-size:13px;line-height:1.5;color:var(--muted);margin:0}.completion-actions{display:flex;gap:10px;margin-top:20px}
+@media(max-width:650px){.completion-notice{bottom:16px;right:16px}.notification-card{padding:16px}}

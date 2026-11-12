@@ -325,6 +325,8 @@ final class DesktopLifecycle: NSObject, NSApplicationDelegate, UNUserNotificatio
     private var launchCheck: DesktopLaunchCheck?
     func applicationDidFinishLaunching(_ notification: Notification) {
         UNUserNotificationCenter.current().delegate = self
+        GentleReminders.shared.start()
+        DesktopPlannerReminders.refreshScheduled()
         statusController = DesktopStatusController()
         DesktopWidgetController.shared.restore()
         WidgetPublisher.shared.schedule()
@@ -340,9 +342,13 @@ final class DesktopLifecycle: NSObject, NSApplicationDelegate, UNUserNotificatio
     }
     func applicationDockMenu(_ sender: NSApplication) -> NSMenu? { DesktopWidgetController.shared.dockMenu() }
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .list])
+        completionHandler([.banner, .list, .sound])
     }
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        if response.actionIdentifier == UNNotificationDismissActionIdentifier { completionHandler(); return }
+        if response.actionIdentifier == GentleReminders.snoozeAction {
+            DispatchQueue.main.async { GentleReminders.shared.snooze(); completionHandler() }; return
+        }
         DispatchQueue.main.async {
             DesktopCounter.shared.showMain?()
             NSApplication.shared.activate(ignoringOtherApps: true)
@@ -468,7 +474,7 @@ final class DesktopLaunchCheck {
     private func checkFocusInsights(_ web: WKWebView) {
         guard let spans = PomodoroEngine.shared.record.focusSpans, spans.reduce(0, { $0 + $1.end-$1.start }) > 1000 else { fail("Partial focus time was not saved after closing and reopening the window"); return }
         for name in ["FocusFinished", "BreakFinished"] {
-            guard let url = Bundle.main.url(forResource: name, withExtension: "wav", subdirectory: "WebContent"), NSSound(contentsOf: url, byReference: false) != nil else { fail("Bundled completion alarm cannot be decoded"); return }
+            guard let url = Bundle.main.url(forResource: name, withExtension: "wav"), NSSound(contentsOf: url, byReference: false) != nil else { fail("Bundled completion alarm cannot be decoded"); return }
         }
         checks.append("Distinct bundled focus and break alarms decode successfully without network or notification permissions")
         web.evaluateJavaScript("location.hash='insights'") { _, _ in
@@ -574,10 +580,11 @@ enum DesktopPlannerReminders {
     private static let identifiers = ["habit-counter.planner.morning", "habit-counter.planner.evening"]
     static var configuration: [String: Any] {
         ["enabled": UserDefaults.standard.bool(forKey: "habit-counter.planner-reminders.enabled"),
+         "sounds": UserDefaults.standard.object(forKey: "foconow.planner-reminders.sounds") as? Bool ?? true,
          "morning": UserDefaults.standard.string(forKey: "habit-counter.planner-reminders.morning") ?? "09:00",
          "evening": UserDefaults.standard.string(forKey: "habit-counter.planner-reminders.evening") ?? "21:00"]
     }
-    static func requests(morning: String, evening: String) throws -> [UNNotificationRequest] {
+    static func requests(morning: String, evening: String, sounds: Bool = true) throws -> [UNNotificationRequest] {
         func components(_ time: String) throws -> DateComponents {
             let parts = time.split(separator: ":")
             guard parts.count == 2, let hour = Int(parts[0]), let minute = Int(parts[1]), (0...23).contains(hour), (0...59).contains(minute) else { throw CocoaError(.validationMissingMandatoryProperty) }
@@ -585,26 +592,37 @@ enum DesktopPlannerReminders {
         }
         return try [morning, evening].enumerated().map { index, time in
             let content = UNMutableNotificationContent()
+            content.sound = sounds ? .default : nil
             content.title = index == 0 ? "A little direction for today" : "A few words, just for you"
             content.body = index == 0 ? "Choose your main target and a few things to do." : "Pause and write a little about your day."
             content.userInfo = ["habitAction": index == 0 ? "morning" : "summary"]
             return UNNotificationRequest(identifier: identifiers[index], content: content, trigger: UNCalendarNotificationTrigger(dateMatching: try components(time), repeats: true))
         }
     }
-    static func configure(enabled: Bool, morning: String, evening: String, completion: @escaping ([String: Any]) -> Void) {
-        guard let pending = try? requests(morning: morning, evening: evening) else {
+    static func refreshScheduled() {
+        guard DesktopLaunchCheck.directory == nil, configuration["enabled"] as? Bool == true,
+              let morning = configuration["morning"] as? String, let evening = configuration["evening"] as? String,
+              let pending = try? requests(morning: morning, evening: evening, sounds: configuration["sounds"] as? Bool ?? true) else { return }
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            guard settings.authorizationStatus == .authorized else { return }
+            for request in pending { UNUserNotificationCenter.current().add(request) }
+        }
+    }
+    static func configure(enabled: Bool, morning: String, evening: String, sounds: Bool = true, completion: @escaping ([String: Any]) -> Void) {
+        guard let pending = try? requests(morning: morning, evening: evening, sounds: sounds) else {
             completion(["type": "plannerReminders", "success": false, "configuration": configuration, "message": "Choose valid morning and evening times."]); return
         }
         Task { @MainActor in
             let center = UNUserNotificationCenter.current()
             do {
                 if enabled {
-                    guard try await center.requestAuthorization(options: [.alert]) else { throw CocoaError(.userCancelled) }
+                    guard try await center.requestAuthorization(options: [.alert, .sound]) else { throw CocoaError(.userCancelled) }
                     for request in pending { try await center.add(request) }
                 } else {
                     center.removePendingNotificationRequests(withIdentifiers: identifiers)
                     center.removeDeliveredNotifications(withIdentifiers: identifiers)
                 }
+                UserDefaults.standard.set(sounds, forKey: "foconow.planner-reminders.sounds")
                 UserDefaults.standard.set(enabled, forKey: "habit-counter.planner-reminders.enabled")
                 UserDefaults.standard.set(morning, forKey: "habit-counter.planner-reminders.morning")
                 UserDefaults.standard.set(evening, forKey: "habit-counter.planner-reminders.evening")

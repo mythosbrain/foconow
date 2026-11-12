@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0-polished.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
+  <a href="https://github.com/mythosbrain/foconow/releases/download/v1.18.0/FocoNow-Mac-v1.18.0.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
 </p>
 
 <p align="center"><strong>Apple silicon</strong> · macOS 13 or later · Free preview</p>
@@ -22,7 +22,16 @@
 
 ![My Day in FocoNow with daily priorities, upcoming tasks, a focus timer, and a review editor](docs/images/my-day.png)
 
-## New in 1.17
+## New in 1.18
+
+- **Hear your finish line:** distinct focus and break chimes, plus a completion card with your next step.
+- **Gentle task reminders:** optional nudges for today’s unfinished tasks, quiet while your timer runs.
+- **Stay in your rhythm:** optional long-focus check-ins, quiet hours, and one-hour snooze.
+- **One place for alerts:** open **Settings & backup → Notifications & sounds** to test alerts and choose your preferences.
+
+Nudges run locally while FocoNow stays in the menu bar. Timer and daily alerts use macOS scheduling. Your Mac’s Focus, sound, and notification settings still apply; alarms do not wake a sleeping Mac.
+
+## A clearer workspace
 
 - **A glass workspace:** translucent panels, crisp controls, and balanced light and dark themes.
 - **Plan at a glance:** estimated focus time left, with earlier work on carried tasks included.
@@ -50,7 +59,7 @@
 
 ## Install on Mac
 
-1. Download [FocoNow v1.17.0 for Apple silicon](https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0-polished.dmg).
+1. Download [FocoNow v1.18.0 for Apple silicon](https://github.com/mythosbrain/foconow/releases/download/v1.18.0/FocoNow-Mac-v1.18.0.dmg).
 2. Open the DMG and drag **FocoNow.app** onto the **Applications** shortcut. If blocked, double-click **Copy command**, click its copy button, then double-click **Open Terminal** in the disk image. Paste with **⌘ V** and press **Return**.
 3. Launch FocoNow from Applications. Follow the welcome walkthrough or select **Skip setup** to open My Day.
 
@@ -89,7 +98,7 @@ These instructions are for the verification warning only. If macOS says the app 
 
 Signing with a Developer ID certificate and completing Apple notarization is the distribution fix for this warning. This preview has not completed that process.
 
-[Download page](https://mythosbrain.github.io/foconow-site/) · [Preview release notes](https://github.com/mythosbrain/foconow/releases/tag/v1.17.0)
+[Download page](https://mythosbrain.github.io/foconow-site/) · [Preview release notes](https://github.com/mythosbrain/foconow/releases/tag/v1.18.0)
 
 ## Privacy and permissions
 
@@ -127,6 +136,6 @@ To create the branded drag-to-install DMG, run `bash scripts/build-dmg.sh` after
 
 The build bundles the offline web interface inside a native SwiftUI and WebKit app, signs it locally, and writes the app and ZIP to `releases/`. In Xcode, open `Apple/HabitCounter.xcodeproj` and select the `HabitCounterMac` scheme.
 
-Version tags publish the verified DMG and its checksum through the repository’s release workflow. The manifest pins the installer to an immutable website commit; no personal access token is required.
+Release assets include the verified DMG and its SHA-256 checksum. When GitHub Actions is unavailable, attach both files to the matching GitHub Release after local verification.
 
 For native verification, run `bash scripts/check-screen-time.sh` and `bash scripts/check-widgets.sh`. The project also includes an experimental iPhone target with [separate signing requirements](Apple/SCREEN-TIME-SETUP.md).

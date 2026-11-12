@@ -126,6 +126,7 @@ final class NativeStore {
         result["permissionSetupStep"] = MacPermissionSetup.step
         result["desktop"] = DesktopPreferences.shared.configuration
         result["plannerReminders"] = DesktopPlannerReminders.configuration
+        result["nudges"] = GentleReminders.shared.configuration
         result["pomodoro"] = PomodoroEngine.shared.snapshot
         #endif
         if let state { result["state"] = state }

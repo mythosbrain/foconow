@@ -31,6 +31,7 @@ swiftc -parse-as-library -swift-version 5 -O \
   "$ROOT/Apple/Shared/WidgetSummary.swift" \
   "$ROOT/Apple/Shared/WidgetPublisher.swift" \
   "$ROOT/Apple/Shared/Pomodoro.swift" \
+  "$ROOT/Apple/Shared/ReminderSupport.swift" \
   "$ROOT/Apple/Shared/ScreenTimeReader.swift" \
   "$ROOT/Apple/Shared/IPhoneScreenTime.swift" \
   "$ROOT/Apple/Shared/PhoneScreenTimeController.swift" \
@@ -40,6 +41,7 @@ swiftc -parse-as-library -swift-version 5 -O \
 cp "$ROOT/Apple/Config/macOS-Info.plist" "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier com.yassine.habitcounter' "$APP/Contents/Info.plist"
 cp -R "$ROOT/Apple/WebContent" "$APP/Contents/Resources/"
+cp "$ROOT/Apple/WebContent/FocusFinished.wav" "$ROOT/Apple/WebContent/BreakFinished.wav" "$APP/Contents/Resources/"
 cp "$ROOT/Apple/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 bash "$ROOT/scripts/build-widget-extension.sh" "$APP/Contents/PlugIns/HabitCounterWidgets.appex"
 # Personal local build: no paid developer certificate or cloud capabilities.

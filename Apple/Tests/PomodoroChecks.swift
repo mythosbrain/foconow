@@ -76,6 +76,15 @@ struct PomodoroChecks {
         assert(alarms.count == 3, "Muted alarms stay silent")
         let restored = PomodoroEngine(directory: trackedDirectory, clock: { time }, ticking: false)
         assert(restored.record.settings.sounds == false && restored.record.focusSpans!.count == 4)
+        // A notification may already have sounded while the app was closed.
+        let expiredDirectory = directory.appendingPathComponent("expired")
+        let expiring = PomodoroEngine(directory: expiredDirectory, clock: { time }, ticking: false)
+        try expiring.configure(work: 1, short: 1, long: 1, every: 2); try expiring.start()
+        time.addTimeInterval(61)
+        var reopenedAlarms = 0
+        let expired = PomodoroEngine(directory: expiredDirectory, clock: { time }, ticking: false, alarm: { _ in reopenedAlarms += 1 })
+        expired.tick(); expired.tick()
+        assert(expired.record.sessions.count == 1 && reopenedAlarms == 0, "Relaunch settles without replaying an already delivered alarm")
         // Version-one files from before focus tracking and sounds remain readable.
         var legacy = try JSONSerialization.jsonObject(with: JSONEncoder().encode(restored.record)) as! [String: Any]
         legacy.removeValue(forKey: "focusSpans"); legacy.removeValue(forKey: "focusStartedAt")

@@ -109,6 +109,15 @@ struct WebHost: NSViewRepresentable {
             guard message.frameInfo.isMainFrame, let url = message.frameInfo.request.url,
                   isBundledURL(url), let body = message.body as? [String: Any], let action = body["action"] as? String else { return }
             if action == "pomodoro" { handlePomodoro(body); return }
+            if action == "nudges" {
+                switch body["operation"] as? String {
+                case "save": GentleReminders.shared.configure(body) { [weak self] event in self?.refreshBootstrap(); self?.send(event) }
+                case "test": GentleReminders.shared.test { [weak self] error in self?.send(["type": "notice", "message": error ?? "Test alert scheduled. Check your banners in a moment.", "error": error != nil]) }
+                case "settings": MacPermissionSetup.openNotificationSettings()
+                default: break
+                }
+                return
+            }
             if action == "permissionSetup", let operation = body["operation"] as? String {
                 handlePermissionSetup(operation, step: body["step"] as? Int)
                 return
@@ -149,7 +158,7 @@ struct WebHost: NSViewRepresentable {
             }
             if action == "loginSettings" { DesktopPreferences.openLoginSettings(); return }
             if action == "plannerReminders", let enabled = body["enabled"] as? Bool, let morning = body["morning"] as? String, let evening = body["evening"] as? String {
-                DesktopPlannerReminders.configure(enabled: enabled, morning: morning, evening: evening) { [weak self] event in
+                DesktopPlannerReminders.configure(enabled: enabled, morning: morning, evening: evening, sounds: body["sounds"] as? Bool ?? true) { [weak self] event in
                     self?.refreshBootstrap(); self?.send(event)
                 }
                 return

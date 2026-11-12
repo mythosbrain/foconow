@@ -58,6 +58,10 @@ final class PomodoroEngine: ObservableObject {
     private var unreadable = false
     private let alarm: (String) -> Void
     private var alarmSound: NSSound?
+    private var scheduledSoundDeadline: Double?
+    private var alertGeneration = 0
+    private var restoringExpiredTimer = false
+    private(set) var notificationWarning: String?
 
     init(directory: URL? = nil, clock: @escaping () -> Date = Date.init, ticking: Bool = true, alarm: ((String) -> Void)? = nil) {
         self.clock = clock
@@ -75,12 +79,13 @@ final class PomodoroEngine: ObservableObject {
             unreadable = true
             storageError = "The saved timer couldn’t be read. Your timer file has been left untouched."
         }
+        restoringExpiredTimer = record.status == "running" && (record.endsAt ?? 0) <= now.timeIntervalSince1970 * 1000
         if ticking {
             timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in self?.tick() }
             observers.append(NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in self?.tick() })
             observers.append(NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in self?.tick() })
             // Observers may read .shared; settle an expired restored timer after singleton construction.
-            DispatchQueue.main.async { [weak self] in self?.tick() }
+            DispatchQueue.main.async { [weak self] in self?.tick(); self?.scheduleAlert() }
         }
     }
     deinit {
@@ -119,6 +124,7 @@ final class PomodoroEngine: ObservableObject {
         }
         value["focusSpans"] = (record.focusSpans ?? []).map { ["start": $0.start, "end": $0.end, "taskId": $0.taskId, "taskTitle": $0.taskTitle] as [String: Any] }
         if let storageError { value["error"] = storageError }
+        if let notificationWarning { value["notificationWarning"] = notificationWarning }
         return value
     }
     private func duration(_ phase: String, _ settings: PomodoroSettings) -> Int { (phase == "work" ? settings.work : phase == "short" ? settings.short : settings.long) * 60 }
@@ -158,7 +164,8 @@ final class PomodoroEngine: ObservableObject {
             }
             do {
                 try commit(value)
-                if clock().timeIntervalSince1970 * 1000 - end < 120000 { playAlarm(value.phase) }
+                if !restoringExpiredTimer && scheduledSoundDeadline != end && clock().timeIntervalSince1970 * 1000 - end < 120000 { playAlarm(value.phase) }
+                restoringExpiredTimer = false; scheduledSoundDeadline = nil
             } catch { }
         } else if record.status == "running" { now = clock(); broadcast(clockOnly: true) }
     }
@@ -256,18 +263,48 @@ final class PomodoroEngine: ObservableObject {
         }
     }
     private func cancelAlert(force: Bool = false) {
-        guard record.settings.notifications || force else { return }
+        alertGeneration += 1; scheduledSoundDeadline = nil
+        guard timer != nil, record.settings.notifications || force else { return }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Self.notificationId])
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [Self.notificationId])
     }
     private func scheduleAlert() {
-        guard record.settings.notifications, record.status == "running" else { return }
+        guard timer != nil, DesktopLaunchCheck.directory == nil, record.settings.notifications,
+              record.status == "running", let deadline = record.endsAt else { return }
+        alertGeneration += 1
+        let generation = alertGeneration
+        let center = UNUserNotificationCenter.current()
+        center.getNotificationSettings { [weak self] settings in
+            DispatchQueue.main.async {
+                guard let self, generation == self.alertGeneration, self.record.status == "running",
+                      self.record.endsAt == deadline, self.record.settings.notifications else { return }
+                guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+                    self.scheduledSoundDeadline = nil
+                    self.notificationWarning = "Banners are blocked in macOS. Completion alarms still play while FocoNow is running."
+                    self.broadcast(); return
+                }
+                let content = Self.completionContent(phase: self.record.phase, sounds: self.record.settings.sounds != false)
+                // One sound owner: macOS with alerts enabled; the engine otherwise.
+                self.scheduledSoundDeadline = deadline
+                center.add(UNNotificationRequest(identifier: Self.notificationId, content: content,
+                    trigger: UNTimeIntervalNotificationTrigger(timeInterval: Double(max(1, self.remaining)), repeats: false))) { [weak self] error in
+                    DispatchQueue.main.async {
+                        guard let self, generation == self.alertGeneration else { return }
+                        if error != nil { self.scheduledSoundDeadline = nil }
+                        self.notificationWarning = error == nil ? nil : "Couldn’t schedule the banner. Your alarm will still play while FocoNow is running."
+                        self.broadcast()
+                    }
+                }
+            }
+        }
+    }
+    static func completionContent(phase: String, sounds: Bool) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
-        content.title = record.phase == "work" ? "Time for a little break" : "Ready for your next focus session?"
-        content.body = "Your timer has finished. Open Tasks & Focus when you’re ready."
-        // The native alarm plays independently of notification permission.
-        content.sound = nil
+        content.title = phase == "work" ? "Focus complete. Take a breath." : "Your break is over"
+        content.body = phase == "work" ? "You made time for what matters. Open your timer to start a break." : "Ready for one more small step? Open your timer when you’re ready."
+        content.sound = sounds ? UNNotificationSound(named: UNNotificationSoundName(rawValue: (phase == "work" ? "FocusFinished.wav" : "BreakFinished.wav"))) : nil
         content.userInfo = ["habitAction": "tasks"]
-        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: Self.notificationId, content: content, trigger: UNTimeIntervalNotificationTrigger(timeInterval: Double(max(1, remaining)), repeats: false)))
+        return content
     }
 }
 #endif
