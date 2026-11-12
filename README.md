@@ -54,7 +54,23 @@
 2. Open the DMG and drag **FocoNow.app** onto the **Applications** shortcut.
 3. Launch FocoNow from Applications. Follow the welcome walkthrough or select **Skip setup** to open My Day.
 
-This preview uses local signing. macOS may ask you to approve the app under **System Settings → Privacy & Security**. [Apple’s instructions for opening apps](https://support.apple.com/102445)
+### If Apple cannot verify FocoNow
+
+The current preview is locally signed and **not notarized by Apple**. macOS may show “Apple could not verify FocoNow is free of malware.” If you trust the download from this repository or the official download page:
+
+1. Try opening **FocoNow from Applications**, then dismiss the warning with **Done** (or **Cancel**).
+2. Go to **System Settings → Privacy & Security** and scroll to **Security**.
+3. Find the message about FocoNow, click **Open Anyway**, authenticate if asked, then confirm **Open**.
+
+Your Mac remembers this exception. **No Terminal commands or disabling Gatekeeper are needed.**
+
+Don’t see **Open Anyway**? Try opening the app again, then return to Privacy & Security. A work or school Mac may require help from its administrator.
+
+These instructions are for the verification warning only. If macOS says the app **will damage your computer** or **contains malware**, stop and report it. A “damaged” alert needs separate troubleshooting.
+
+[Visual first-launch guide](https://mythosbrain.github.io/foconow-site/#first-launch) · [Apple’s instructions](https://support.apple.com/102445)
+
+Signing with a Developer ID certificate and completing Apple notarization is the distribution fix for this warning. This preview has not completed that process.
 
 [Download page](https://mythosbrain.github.io/foconow-site/) · [Preview release notes](https://github.com/mythosbrain/foconow/releases/tag/v1.17.0)
 
