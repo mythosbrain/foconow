@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0-simple.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
+  <a href="https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0-polished.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
 </p>
 
 <p align="center"><strong>Apple silicon</strong> · macOS 13 or later · Free preview</p>
@@ -50,7 +50,7 @@
 
 ## Install on Mac
 
-1. Download [FocoNow v1.17.0 for Apple silicon](https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0-simple.dmg).
+1. Download [FocoNow v1.17.0 for Apple silicon](https://mythosbrain.github.io/foconow-site/downloads/FocoNow-Mac-v1.17.0-polished.dmg).
 2. Open the DMG and drag **FocoNow.app** onto the **Applications** shortcut. If blocked, double-click **Copy command**, click its copy button, then double-click **Open Terminal** in the disk image. Paste with **⌘ V** and press **Return**.
 3. Launch FocoNow from Applications. Follow the welcome walkthrough or select **Skip setup** to open My Day.
 

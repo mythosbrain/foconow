@@ -18,6 +18,8 @@ mkdir -p "$ART"
 swiftc -module-cache-path "$ROOT/releases/.swift-module-cache" "$ROOT/scripts/dmg/background.swift" -o "$ART/render"
 "$ART/render" "$ART"
 cp "$ROOT/scripts/installer/Copy command.html" "$ART/Copy command.html"
+swiftc -module-cache-path "$ROOT/releases/.swift-module-cache" "$ROOT/scripts/dmg/copy-icon.swift" -o "$ART/copy-icon"
+"$ART/copy-icon" "$ART/Copy command.html" "$ART/copy-icon.png"
 SUFFIX="${FOCONOW_DMG_SUFFIX:-}"
 [[ "$SUFFIX" =~ ^[a-zA-Z0-9-]*$ ]] || { echo 'Invalid DMG suffix' >&2; exit 1; }
 DMG="$ROOT/releases/FocoNow-Mac-v$VERSION$SUFFIX.dmg"

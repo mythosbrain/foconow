@@ -1,4 +1,5 @@
 import sys
+import subprocess
 from pathlib import Path
 
 from ds_store import DSStore
@@ -20,6 +21,9 @@ with DSStore.open(str(mount / ".DS_Store"), "r") as layout:
     assert layout["Open Terminal"]["Iloc"] == (470, 430)
     assert (mount / "Open Terminal").readlink() == Path("/System/Applications/Utilities/Terminal.app")
     assert 'id="copy"' in (mount / "Copy command.html").read_text()
+    info = bytes.fromhex(subprocess.check_output(["/usr/bin/xattr", "-px", "com.apple.FinderInfo", str(mount / "Copy command.html")], text=True))
+    assert int.from_bytes(info[8:10], "big") & 0x0400, "Missing custom icon flag"
+    assert len(subprocess.check_output(["/usr/bin/xattr", "-p", "com.apple.ResourceFork", str(mount / "Copy command.html")])) > 0
     assert not (mount / "First launch.txt").exists()
     assert not (mount / "Open FocoNow.command").exists()
     target = Alias.from_bytes(view["backgroundImageAlias"]).target

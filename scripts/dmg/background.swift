@@ -100,6 +100,10 @@ func draw(scale: Int, to url: URL) throws {
     line([(34, 324), (686, 324)], white: 0.17)
     label("App blocked? Copy. Paste. Open.", x: 360, top: 344, pointSize: 17, weight: .semibold, white: 0.92, centered: true)
     label("Double-click Copy command, then Open Terminal. Paste and press Return.", x: 360, top: 373, pointSize: 12, weight: .regular, white: 0.72, centered: true)
+    for center in [CGFloat(250), 470] {
+        rounded(rect(center - 75, 392, 150, 110), radius: 23, fill: gray(0.074), stroke: gray(0.20))
+        rounded(rect(center - 70, 478, 140, 25), radius: 8, fill: gray(0.465))
+    }
     label("Make your time count.", x: 360, top: 520, pointSize: 38, weight: .semibold, white: 0.98, tracking: -1.55, centered: true)
     label("A daily workspace for Mac.", x: 360, top: 570, pointSize: 14, weight: .regular, white: 0.65, centered: true)
 
