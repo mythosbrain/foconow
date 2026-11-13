@@ -46,6 +46,7 @@ struct WebHost: NSViewRepresentable {
         private var phoneSyncObserver: NSObjectProtocol?
         private var widgetObserver: NSObjectProtocol?
         private var ready = false
+        private var pendingCompleteBackup: [String: Any]?
         private var permissionSetupStep: Int?
         private var permissionStatusRequest = 0
 
@@ -108,6 +109,15 @@ struct WebHost: NSViewRepresentable {
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             guard message.frameInfo.isMainFrame, let url = message.frameInfo.request.url,
                   isBundledURL(url), let body = message.body as? [String: Any], let action = body["action"] as? String else { return }
+            if action == "deadlineAuthorization" {
+                TaskDeadlineAlerts.shared.authorize { [weak self] allowed in
+                    self?.send(["type": "notice", "message": allowed ? "Deadline reminder saved. It follows your reminder sound setting." : "Deadline saved. Allow FocoNow notifications in macOS Settings to receive its reminder.", "error": !allowed])
+                }; return
+            }
+            if action == "restoreComplete", let state = body["state"] as? [String: Any] {
+                restoreComplete(state); return
+            }
+            if action == "backupSafetyFolder" { NSWorkspace.shared.open(store.directory.appendingPathComponent("RestoreSafety")); return }
             if action == "pomodoro" { handlePomodoro(body); return }
             if action == "nudges" {
                 switch body["operation"] as? String {
@@ -180,7 +190,9 @@ struct WebHost: NSViewRepresentable {
                 return
             }
             if action == "recoveryOpen", let name = body["name"] as? String {
-                do { send(["type": "import", "state": try store.recoveryCopy(named: name)]) }
+                do {
+                    try prepareImport(store.recoveryCopy(named: name))
+                }
                 catch { send(["type": "notice", "message": "This recovery copy couldn’t be opened. Try another copy.", "error": true]) }
                 return
             }
@@ -314,15 +326,19 @@ struct WebHost: NSViewRepresentable {
             panel.title = "Export FocoNow Backup"
             panel.allowedContentTypes = [.json]
             let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"
-            panel.nameFieldStringValue = "foconow-\(formatter.string(from: Date())).json"
+            panel.nameFieldStringValue = "foconow-complete-\(formatter.string(from: Date())).json"
             panel.beginSheetModal(for: window) { [weak self] result in
                 guard result == .OK, let url = panel.url else { return }
                 do {
-                    let data = try JSONSerialization.data(withJSONObject: state, options: [.prettyPrinted, .sortedKeys])
+                    guard let self else { return }
+                    let engine = PomodoroEngine.shared
+                    guard engine.storageError == nil else { throw CompleteBackup.failure("Your focus history couldn’t be read; it has been left untouched.") }
+                    let value = try CompleteBackup.make(state: state, timer: engine.backupRecord(), directory: self.store.directory, defaults: self.store.backupDefaults)
+                    let data = try CompleteBackup.json(value)
                     try data.write(to: url, options: .atomic)
                     try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
-                    self?.send(["type": "notice", "message": "Your backup is saved."])
-                } catch { self?.send(["type": "notice", "message": "Couldn’t export the backup. Try a different folder.", "error": true]) }
+                    self.send(["type": "notice", "message": "Your complete backup is saved, including focus history and preferences."])
+                } catch { self?.send(["type": "notice", "message": "Couldn’t export the complete backup: " + error.localizedDescription, "error": true]) }
             }
         }
 
@@ -337,12 +353,56 @@ struct WebHost: NSViewRepresentable {
                 guard result == .OK, let url = panel.url else { return }
                 do {
                     let attributes = try url.resourceValues(forKeys: [.fileSizeKey])
-                    guard (attributes.fileSize ?? 0) <= 10 * 1024 * 1024 else { throw CocoaError(.fileReadTooLarge) }
+                    guard (attributes.fileSize ?? 0) <= CompleteBackup.limit else { throw CocoaError(.fileReadTooLarge) }
                     let data = try Data(contentsOf: url)
                     let value = try JSONSerialization.jsonObject(with: data)
-                    self?.send(["type": "import", "state": value])
-                } catch { self?.send(["type": "notice", "message": "This file isn’t a readable backup smaller than 10 MB.", "error": true]) }
+                    try self?.prepareImport(value)
+                } catch { self?.send(["type": "notice", "message": "This file isn’t a supported backup smaller than 50 MB. No data was changed.", "error": true]) }
             }
+        }
+
+        func prepareImport(_ value: Any) throws {
+            pendingCompleteBackup = nil
+            if let complete = value as? [String: Any], complete["format"] as? String == CompleteBackup.format {
+                try CompleteBackup.validate(complete); pendingCompleteBackup = complete
+                let timer = try JSONDecoder().decode(PomodoroRecord.self, from: CompleteBackup.json(complete["pomodoro"]!))
+                send(["type": "import", "state": complete["state"]!, "complete": true, "sessions": timer.sessions.count])
+            } else { pendingCompleteBackup = nil; send(["type": "import", "state": value]) }
+        }
+
+        private func restoreComplete(_ state: [String: Any]) {
+            do {
+                guard let backup = pendingCompleteBackup else { throw CompleteBackup.failure("Choose the complete backup again.") }
+                guard !phoneScreenTime.isBusy else { throw CompleteBackup.failure("Finish or cancel the current Screen Time import, then retry the restore.") }
+                // A portable safety copy is also available through the normal recovery browser.
+                if let current = store.state, PomodoroEngine.shared.storageError == nil,
+                   let safety = try? CompleteBackup.make(state: current, timer: PomodoroEngine.shared.backupRecord(), directory: store.directory, defaults: store.backupDefaults) {
+                    try FileManager.default.createDirectory(at: store.recoveryDirectory, withIntermediateDirectories: true)
+                    let name = "complete-\(Int(Date().timeIntervalSince1970))-\(UUID().uuidString).json"
+                    try CompleteBackup.write(try CompleteBackup.json(safety), to: store.recoveryDirectory.appendingPathComponent(name))
+                }
+                try CompleteBackup.restore(backup, validatedState: state, directory: store.directory, defaults: store.backupDefaults)
+                let timer = try JSONDecoder().decode(PomodoroRecord.self, from: CompleteBackup.json(backup["pomodoro"]!))
+                PomodoroEngine.shared.acceptRestoredRecord(timer)
+                if DesktopLaunchCheck.directory == nil {
+                GentleReminders.shared.reloadPreferences()
+                let widget = DesktopWidgetController.shared, defaults = UserDefaults.standard
+                widget.setVisible(defaults.bool(forKey: "habit-counter.desktop-widget.visible"))
+                widget.setPinned(defaults.bool(forKey: "habit-counter.desktop-widget.pinned"))
+                widget.setDockEnabled(defaults.object(forKey: "habit-counter.desktop-widget.dock") as? Bool ?? true)
+                phoneScreenTime.reloadPreferences()
+                DesktopPlannerReminders.refreshScheduled()
+                DailyReminder.refreshScheduled()
+                }
+                store.acceptRestoredState(state)
+                pendingCompleteBackup = nil
+                refreshBootstrap()
+                send(["type": "completeRestored", "bootstrap": store.bootstrap])
+                phoneScreenTime.settingsHistory { [weak self] event in self?.send(event) }
+                let reports = backup["screenTime"] as? [String: Any] ?? [:]
+                let snapshot = reports["iphone-screen-time-latest.json"] as? [String: Any] ?? ["status": "empty", "devices": []]
+                send(["type": "phoneScreenTime", "snapshot": snapshot])
+            } catch { send(["type": "completeRestoreError", "message": error.localizedDescription]) }
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {

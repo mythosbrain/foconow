@@ -5,6 +5,7 @@ import UserNotifications
 final class NativeStore {
     let directory: URL
     let stateURL: URL
+    let backupDefaults: UserDefaults
     private(set) var state: [String: Any]?
     private(set) var loadError: String?
     private(set) var recoveryWarning: String?
@@ -16,15 +17,22 @@ final class NativeStore {
     func recoveryCopies() throws -> [[String: Any]] {
         guard FileManager.default.fileExists(atPath: recoveryDirectory.path) else { return [] }
         return try FileManager.default.contentsOfDirectory(at: recoveryDirectory, includingPropertiesForKeys: [.fileSizeKey])
-            .filter { $0.lastPathComponent.range(of: #"^recovery-\d{4}-\d{2}-\d{2}\.json$"#, options: .regularExpression) != nil }
+            .filter { $0.lastPathComponent.range(of: #"^(recovery-\d{4}-\d{2}-\d{2}|complete-\d+-[A-Fa-f0-9-]+)\.json$"#, options: .regularExpression) != nil }
             .sorted { $0.lastPathComponent > $1.lastPathComponent }
-            .map { ["name": $0.lastPathComponent, "date": String($0.lastPathComponent.dropFirst(9).prefix(10))] }
+            .map { url in
+                let name = url.lastPathComponent
+                if name.hasPrefix("complete-"), let stamp = Double(name.split(separator: "-")[1]) {
+                    let formatter = DateFormatter(); formatter.dateStyle = .medium; formatter.timeStyle = .short
+                    return ["name": name, "date": "Complete · " + formatter.string(from: Date(timeIntervalSince1970: stamp))]
+                }
+                return ["name": name, "date": String(name.dropFirst(9).prefix(10))]
+            }
     }
 
     func recoveryCopy(named name: String) throws -> [String: Any] {
         guard try recoveryCopies().contains(where: { $0["name"] as? String == name }) else { throw CocoaError(.fileReadNoSuchFile) }
         let url = recoveryDirectory.appendingPathComponent(name)
-        guard (try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0) <= 10 * 1024 * 1024,
+        guard (try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0) <= CompleteBackup.limit,
               let object = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any] else { throw CocoaError(.fileReadCorruptFile) }
         return object
     }
@@ -38,13 +46,18 @@ final class NativeStore {
             try FileManager.default.copyItem(at: stateURL, to: destination)
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: destination.path)
         }
-        for copy in try recoveryCopies().dropFirst(14) {
+        for copy in try recoveryCopies().filter({ ($0["name"] as? String)?.hasPrefix("recovery-") == true }).dropFirst(14) {
             if let name = copy["name"] as? String { try FileManager.default.removeItem(at: recoveryDirectory.appendingPathComponent(name)) }
         }
     }
     #endif
 
-    init(directory overrideDirectory: URL? = nil) {
+    init(directory overrideDirectory: URL? = nil, backupDefaults: UserDefaults? = nil) {
+        #if os(macOS)
+        self.backupDefaults = backupDefaults ?? (DesktopLaunchCheck.directory != nil ? UserDefaults(suiteName: "foconow.backup-diagnostics")! : .standard)
+        #else
+        self.backupDefaults = backupDefaults ?? .standard
+        #endif
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         #if os(macOS)
         directory = overrideDirectory ?? DesktopLaunchCheck.directory?.appendingPathComponent("isolated-data", isDirectory: true) ?? support.appendingPathComponent("com.yassine.habitcounter", isDirectory: true)
@@ -54,6 +67,9 @@ final class NativeStore {
         stateURL = directory.appendingPathComponent("state.json")
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+            #if os(macOS)
+            try CompleteBackup.recoverIfNeeded(directory: directory, defaults: self.backupDefaults)
+            #endif
             if FileManager.default.fileExists(atPath: stateURL.path) {
                 let size = try stateURL.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
                 guard size <= 10 * 1024 * 1024 else { throw CocoaError(.fileReadTooLarge) }
@@ -97,9 +113,16 @@ final class NativeStore {
         #endif
     }
 
+    #if os(macOS)
+    func acceptRestoredState(_ value: [String: Any]) {
+        state = value; loadError = nil
+        NotificationCenter.default.post(name: Self.didSave, object: nil, userInfo: ["state": value])
+    }
+    #endif
+
     var appearance: String {
         #if os(macOS)
-        let value = UserDefaults.standard.string(forKey: "habit-counter.desktop-appearance") ?? "dark"
+        let value = backupDefaults.string(forKey: "habit-counter.desktop-appearance") ?? "dark"
         #else
         let value = UserDefaults.standard.string(forKey: "habit-counter.appearance") ?? "system"
         #endif
@@ -108,7 +131,7 @@ final class NativeStore {
     func setAppearance(_ value: String) {
         guard ["light", "dark", "system"].contains(value) else { return }
         #if os(macOS)
-        UserDefaults.standard.set(value, forKey: "habit-counter.desktop-appearance")
+        backupDefaults.set(value, forKey: "habit-counter.desktop-appearance")
         #else
         UserDefaults.standard.set(value, forKey: "habit-counter.appearance")
         #endif
@@ -142,6 +165,21 @@ enum DailyReminder {
         ["enabled": UserDefaults.standard.bool(forKey: "habit-counter.reminder.enabled"),
          "time": UserDefaults.standard.string(forKey: "habit-counter.reminder.time") ?? "20:00"]
     }
+    #if os(macOS)
+    static func refreshScheduled() {
+        guard DesktopLaunchCheck.directory == nil else { return }
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        guard configuration["enabled"] as? Bool == true, let time = configuration["time"] as? String else { return }
+        let pieces = time.split(separator: ":").compactMap { Int($0) }
+        guard pieces.count == 2 else { return }
+        center.getNotificationSettings { settings in
+            guard settings.authorizationStatus == .authorized else { return }
+            let content = UNMutableNotificationContent(); content.title = "A moment for you"; content.body = "Take a breath and check in with yourself."
+            center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: UNCalendarNotificationTrigger(dateMatching: DateComponents(hour: pieces[0], minute: pieces[1]), repeats: true)))
+        }
+    }
+    #endif
     static func configure(enabled: Bool, time: String, completion: @escaping ([String: Any]) -> Void) {
         let pieces = time.split(separator: ":")
         guard pieces.count == 2, let hour = Int(pieces[0]), let minute = Int(pieces[1]), (0...23).contains(hour), (0...59).contains(minute) else {

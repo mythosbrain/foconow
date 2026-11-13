@@ -23,6 +23,11 @@ final class PhoneScreenTimeController {
     var syncConfiguration: [String:Any] { ["type":"phoneSettingsSync","enabled":autoEnabled,"running":readingSettings,"current":syncCurrent,"total":syncTotal,"status":syncStatus,"message":syncMessage,"lastSync":lastSync] }
     private func emitSync() { NotificationCenter.default.post(name:Self.didSync,object:self,userInfo:syncConfiguration) }
     private var isCancelled: Bool { cancelLock.lock();defer{cancelLock.unlock()};return cancelFlag }
+    var isBusy: Bool { importing || readingSettings }
+    func reloadPreferences() {
+        syncDevice = UserDefaults.standard.string(forKey: "habit-counter.phone-settings-device")
+        configureSettingsSync(UserDefaults.standard.object(forKey: "habit-counter.phone-settings-auto") == nil || UserDefaults.standard.bool(forKey: "habit-counter.phone-settings-auto"))
+    }
     func cancelSettingsImport() { cancelLock.lock();cancelFlag=true;cancelLock.unlock() }
     func configureSettingsSync(_ enabled:Bool) {
         autoEnabled=enabled

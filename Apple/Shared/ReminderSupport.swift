@@ -84,6 +84,10 @@ final class GentleReminders {
         guard DesktopLaunchCheck.directory == nil else { return }
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [Self.requestID])
     }
+    func reloadPreferences() {
+        settings = defaults.data(forKey: Self.key).flatMap { try? JSONDecoder().decode(NudgeSettings.self, from: $0) } ?? NudgeSettings()
+        lastPrompt = Date(); clearStaleReminder()
+    }
     func snooze() {
         defaults.set(Date().addingTimeInterval(3600).timeIntervalSince1970, forKey: "foconow.nudges.snoozedUntil")
         clearStaleReminder()
@@ -152,6 +156,71 @@ final class GentleReminders {
                 // Back off even on denial/failure; never hammer the notification service.
                 self.lastPrompt = now
                 if error == nil && kind == "focus" { self.lastFocusDeadline = deadline }
+            }
+        }
+    }
+}
+#endif
+
+#if os(macOS)
+/// Deadline alerts are deduplicated across carried copies of the same task.
+final class TaskDeadlineAlerts {
+    static let shared = TaskDeadlineAlerts()
+    private var observer: NSObjectProtocol?
+    private var timer: Timer?
+    private var generation = 0
+    static func candidates(_ state: [String: Any], now: Date = Date()) -> [(id: String, date: String, due: Date)] {
+        let planner = state["planner"] as? [String: [String: Any]] ?? [:]
+        var seen = Set<String>(), result: [(id: String, date: String, due: Date)] = []
+        let formatter = DateFormatter(); formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"; formatter.isLenient = false
+        for day in planner.keys.sorted(by: >) {
+            for task in planner[day]?["tasks"] as? [[String: Any]] ?? [] {
+                guard let id = task["originId"] as? String, !seen.contains(id) else { continue }
+                seen.insert(id)
+                guard task["done"] as? Bool != true, task["remindAtDeadline"] as? Bool == true,
+                      let date = task["dueDate"] as? String, let time = task["dueTime"] as? String,
+                      let due = formatter.date(from: "\(date) \(time)"), due > now.addingTimeInterval(-120) else { continue }
+                result.append((id: "foconow.deadline." + id, date: day, due: due))
+            }
+        }
+        return result.sorted { $0.due < $1.due }
+    }
+    func start() {
+        guard observer == nil, DesktopLaunchCheck.directory == nil else { return }
+        observer = NotificationCenter.default.addObserver(forName: NativeStore.didSave, object: nil, queue: .main) { [weak self] event in
+            if let state = event.userInfo?["state"] as? [String: Any] { self?.refresh(state) }
+        }
+        timer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+            if let state = DesktopCounter.shared.state { self?.refresh(state) }
+        }
+        if let state = DesktopCounter.shared.state { refresh(state) }
+    }
+    func authorize(completion: @escaping (Bool) -> Void) {
+        guard DesktopLaunchCheck.directory == nil else { completion(false); return }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { allowed, _ in
+            DispatchQueue.main.async { if let state = DesktopCounter.shared.state { self.refresh(state) }; completion(allowed) }
+        }
+    }
+    func refresh(_ state: [String: Any]) {
+        guard DesktopLaunchCheck.directory == nil else { return }
+        generation += 1; let current = generation, now = Date()
+        let values = Array(Self.candidates(state, now: now).prefix(32)), ids = Set(values.map(\.id))
+        let center = UNUserNotificationCenter.current()
+        center.getPendingNotificationRequests { requests in
+            DispatchQueue.main.async {
+                guard current == self.generation else { return }
+                let obsolete = requests.filter { $0.identifier.hasPrefix("foconow.deadline.") && !ids.contains($0.identifier) }.map(\.identifier)
+                center.removePendingNotificationRequests(withIdentifiers: obsolete)
+                for value in values where value.due > Date() {
+                    let content = UNMutableNotificationContent()
+                    content.title = "A task deadline is here"
+                    content.body = "Open Tasks & Focus to finish it or give yourself a new deadline."
+                    content.sound = GentleReminders.shared.configuration["sounds"] as? Bool != false ? .default : nil
+                    content.userInfo = ["habitAction": "taskDay:" + value.date]
+                    let parts = Calendar.current.dateComponents([.year,.month,.day,.hour,.minute], from: value.due)
+                    center.add(UNNotificationRequest(identifier: value.id, content: content, trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
+                }
             }
         }
     }

@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.19.0 — 2026-11-13
+
+### Complete backups and clearer planning
+- One portable JSON backup includes planner records, deadlines, journals, bad habits, focus sessions/spans, timer settings, portable app preferences, and imported iPhone Screen Time reports.
+- Preview before restoring. Keep a complete safety copy in Recovery copies and roll back a failed or interrupted restore. Exporting leaves a live timer running; restoring brings it back paused.
+- Older planner-only backups still work without replacing focus history or native preferences. macOS permissions, login registration, window placement, and system-owned Screen Time data are not copied.
+- Optional task deadlines with local times, overdue badges/filter, and opt-in local notifications. Carried copies share one alert; finishing the latest copy cancels it. The nearest 32 future alerts are scheduled and refreshed while the app runs.
+- A redesigned date control and calendar with month navigation, Today/Tomorrow shortcuts, arrow keys, and Page Up/Down. Supports light and dark themes.
+
+Backup files stay local and are not encrypted. Deadline notifications respect macOS authorization, Focus, and sound settings. Ad hoc signed, not notarized. Existing app identity and storage locations are preserved.
+
+
+Validated with 49 JavaScript tests, native complete-backup failure/recovery and Pomodoro checks, a real WebKit backup/deadline/calendar round trip, and the packaged app’s 17 launch/background checks.
+
 ## 1.18.0 — 2026-11-12
 
 ### Notifications that fit your day

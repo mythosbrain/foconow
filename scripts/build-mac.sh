@@ -32,6 +32,7 @@ swiftc -parse-as-library -swift-version 5 -O \
   "$ROOT/Apple/Shared/WidgetPublisher.swift" \
   "$ROOT/Apple/Shared/Pomodoro.swift" \
   "$ROOT/Apple/Shared/ReminderSupport.swift" \
+  "$ROOT/Apple/Shared/CompleteBackup.swift" \
   "$ROOT/Apple/Shared/ScreenTimeReader.swift" \
   "$ROOT/Apple/Shared/IPhoneScreenTime.swift" \
   "$ROOT/Apple/Shared/PhoneScreenTimeController.swift" \

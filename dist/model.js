@@ -19,11 +19,27 @@ export function dayPlan(state, date = dayKey()) {
 export function updateDayPlan(state, date, patch) {
   return { ...state, planner: { ...(state.planner || {}), [date]: { ...dayPlan(state, date), ...patch } } };
 }
-export function addDayTask(state, date, title, priority = false) {
+export function addDayTask(state, date, title, priority = false, dueDate = '', dueTime = '') {
+  if (!validDeadline(dueDate, dueTime)) throw new Error('Choose a valid deadline. A time needs a date.');
   const plan = dayPlan(state, date), text = title.trim();
   if (!text || text.length > 240 || plan.tasks.length >= 100) throw new Error('Add a task of up to 240 characters. Each day holds up to 100 tasks.');
   const id = uid();
-  return updateDayPlan(state, date, { tasks: [...plan.tasks, { id, originId: id, title: text, done: false, priority: !!priority, notes: '', estimate: 1 }] });
+  return updateDayPlan(state, date, { tasks: [...plan.tasks, { id, originId: id, title: text, done: false, priority: !!priority, notes: '', estimate: 1, dueDate, dueTime, remindAtDeadline: false }] });
+}
+export function validDeadline(date = '', time = '') {
+  if (typeof date !== 'string' || typeof time !== 'string') return false;
+  if (!date) return time === '';
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || dayKey(new Date(`${date}T12:00:00`)) !== date) return false;
+  if (time === '') return true;
+  if (typeof time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return false;
+  const local = new Date(`${date}T${time}:00`);
+  return dayKey(local) === date && local.getHours() === Number(time.slice(0,2)) && local.getMinutes() === Number(time.slice(3));
+}
+export function deadlineStatus(task, now = Date.now()) {
+  if (!task.dueDate || task.done) return '';
+  const today = dayKey(now);
+  if (task.dueDate < today || (task.dueTime && new Date(`${task.dueDate}T${task.dueTime}:00`).getTime() < now)) return 'overdue';
+  return task.dueDate === today ? 'today' : 'upcoming';
 }
 export function bringTasksForward(state, source, destination, selectedIds) {
   if (source >= destination) throw new Error('Choose an earlier day to bring tasks from.');
@@ -132,7 +148,9 @@ export function validateState(raw, now = Date.now()) {
       if (!t || !id(t.id) || !id(t.originId) || !str(t.title, 240) || !t.title.trim() || typeof t.done !== 'boolean' || typeof t.priority !== 'boolean') fail();
       const notes = t.notes === undefined ? '' : t.notes, estimate = t.estimate === undefined ? 1 : t.estimate;
       if (!str(notes, 2000) || !Number.isInteger(estimate) || estimate < 1 || estimate > 12) fail();
-      return { id: t.id, originId: t.originId, title: t.title.trim(), done: t.done, priority: t.priority, notes, estimate };
+      const dueDate = t.dueDate ?? '', dueTime = t.dueTime ?? '', remindAtDeadline = t.remindAtDeadline ?? false;
+      if (!validDeadline(dueDate, dueTime) || typeof remindAtDeadline !== 'boolean' || (remindAtDeadline && (!dueDate || !dueTime))) fail();
+      return { id: t.id, originId: t.originId, title: t.title.trim(), done: t.done, priority: t.priority, notes, estimate, dueDate, dueTime, remindAtDeadline };
     });
     if (new Set(tasks.map(t => t.id)).size !== tasks.length || new Set(tasks.map(t => t.originId)).size !== tasks.length) fail();
     planner[key] = { focus: plan.focus, tasks, summary: plan.summary, summarySavedAt: plan.summarySavedAt };

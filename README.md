@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/mythosbrain/foconow/releases/download/v1.18.0/FocoNow-Mac-v1.18.0.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
+  <a href="https://github.com/mythosbrain/foconow/releases/download/v1.19.0/FocoNow-Mac-v1.19.0.dmg"><img src="docs/images/download-for-mac.svg" width="188" height="42" alt="Download FocoNow for Mac"></a>
 </p>
 
 <p align="center"><strong>Apple silicon</strong> · macOS 13 or later · Free preview</p>
@@ -22,14 +22,14 @@
 
 ![My Day in FocoNow with daily priorities, upcoming tasks, a focus timer, and a review editor](docs/images/my-day.png)
 
-## New in 1.18
+## New in 1.19
 
-- **Hear your finish line:** distinct focus and break chimes, plus a completion card with your next step.
-- **Gentle task reminders:** optional nudges for today’s unfinished tasks, quiet while your timer runs.
-- **Stay in your rhythm:** optional long-focus check-ins, quiet hours, and one-hour snooze.
-- **One place for alerts:** open **Settings & backup → Notifications & sounds** to test alerts and choose your preferences.
+- **Your whole workspace, in one backup:** tasks, deadlines, journals, bad habits, focus history, timer settings, app preferences, and imported iPhone Screen Time reports.
+- **Safer restores:** preview before replacing, keep a complete safety copy, and recover automatically if a restore is interrupted. Running timers restore paused.
+- **Task deadlines:** add a date, optional local time, and an optional private notification. Find unfinished overdue work with the new filter.
+- **A clearer calendar:** a compact date control, month picker, Today/Tomorrow shortcuts, and keyboard navigation in My Day and Tasks & Focus.
 
-Nudges run locally while FocoNow stays in the menu bar. Timer and daily alerts use macOS scheduling. Your Mac’s Focus, sound, and notification settings still apply; alarms do not wake a sleeping Mac.
+Open **Settings & backup → Export complete backup** to save a portable copy. Existing planner-only backups remain supported. macOS permissions and launch-at-login registration stay on the destination Mac; backup files are not encrypted.
 
 ## A clearer workspace
 
@@ -59,7 +59,7 @@ Nudges run locally while FocoNow stays in the menu bar. Timer and daily alerts u
 
 ## Install on Mac
 
-1. Download [FocoNow v1.18.0 for Apple silicon](https://github.com/mythosbrain/foconow/releases/download/v1.18.0/FocoNow-Mac-v1.18.0.dmg).
+1. Download [FocoNow v1.19.0 for Apple silicon](https://github.com/mythosbrain/foconow/releases/download/v1.19.0/FocoNow-Mac-v1.19.0.dmg).
 2. Open the DMG and drag **FocoNow.app** onto the **Applications** shortcut. If blocked, double-click **Copy command**, click its copy button, then double-click **Open Terminal** in the disk image. Paste with **⌘ V** and press **Return**.
 3. Launch FocoNow from Applications. Follow the welcome walkthrough or select **Skip setup** to open My Day.
 
@@ -98,11 +98,11 @@ These instructions are for the verification warning only. If macOS says the app 
 
 Signing with a Developer ID certificate and completing Apple notarization is the distribution fix for this warning. This preview has not completed that process.
 
-[Download page](https://mythosbrain.github.io/foconow-site/) · [Preview release notes](https://github.com/mythosbrain/foconow/releases/tag/v1.18.0)
+[Download page](https://mythosbrain.github.io/foconow-site/) · [Preview release notes](https://github.com/mythosbrain/foconow/releases/tag/v1.19.0)
 
 ## Privacy and permissions
 
-FocoNow works offline and stores your plans, journal, and focus history on your Mac. Use **Settings & Backup** to export your plans, journal, and habit records to a file you choose. Pomodoro history is stored separately.
+FocoNow works offline and stores your plans, journal, and focus history on your Mac. Use **Settings & backup → Export complete backup** to save your planner, journal, bad habits, focus history, timer settings, app preferences, and imported Screen Time reports together. Store the file somewhere private: it is readable JSON, not encrypted. Permissions and login registration are not transferable. Older planner-only backups remain supported and leave focus history and preferences unchanged.
 
 The core workspace works right away. The walkthrough explains each optional setting before you enable it.
 

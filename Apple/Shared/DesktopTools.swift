@@ -326,6 +326,7 @@ final class DesktopLifecycle: NSObject, NSApplicationDelegate, UNUserNotificatio
     func applicationDidFinishLaunching(_ notification: Notification) {
         UNUserNotificationCenter.current().delegate = self
         GentleReminders.shared.start()
+        TaskDeadlineAlerts.shared.start()
         DesktopPlannerReminders.refreshScheduled()
         statusController = DesktopStatusController()
         DesktopWidgetController.shared.restore()
@@ -600,7 +601,11 @@ enum DesktopPlannerReminders {
         }
     }
     static func refreshScheduled() {
-        guard DesktopLaunchCheck.directory == nil, configuration["enabled"] as? Bool == true,
+        guard DesktopLaunchCheck.directory == nil else { return }
+        guard configuration["enabled"] as? Bool == true else {
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers); return
+        }
+        guard
               let morning = configuration["morning"] as? String, let evening = configuration["evening"] as? String,
               let pending = try? requests(morning: morning, evening: evening, sounds: configuration["sounds"] as? Bool ?? true) else { return }
         UNUserNotificationCenter.current().getNotificationSettings { settings in

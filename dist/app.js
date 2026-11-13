@@ -1,4 +1,4 @@
-import { DAY, MILESTONES, uid, dayKey, createHabit, initialState, elapsed, stats, checkIn, resetHabit, activeHabit, replaceHabit, validateState, DEFAULT_INTENTIONS, logUrge, weeklyReview, calendarMonth, dayPlan, updateDayPlan, addDayTask, bringTasksForward } from './model.js';
+import { DAY, MILESTONES, uid, dayKey, createHabit, initialState, elapsed, stats, checkIn, resetHabit, activeHabit, replaceHabit, validateState, DEFAULT_INTENTIONS, logUrge, weeklyReview, calendarMonth, dayPlan, updateDayPlan, addDayTask, bringTasksForward, validDeadline, deadlineStatus } from './model.js';
 import { focusReport, focusDuration, focusIntervals, taskWorkload } from './insights.js';
 import { phonePeriod } from './phone-history.js';
 import { createPhoneScreenTime } from './phone-ui.js';
@@ -94,6 +94,7 @@ let reminder = window.__HABIT_NATIVE__?.reminder || { enabled: false, time: '20:
 let toastTimer;
 let breathingTimer;
 let pendingImport;
+let pendingCompleteImport = false;
 let renderedDay = dayKey();
 let savedDataUnreadable = false;
 let plannerDate = dayKey();
@@ -445,8 +446,8 @@ function downloadBackup() {
   toast('Your backup is ready. Keep it somewhere private.');
 }
 function settingsModal() {
-  const storageNote = nativeHost ? `Your records are saved locally in this ${nativeDevice} app, independently of your browser. This version works offline and doesn’t sync between devices. Import a backup to bring over your existing data.${isMac ? ' Task notes and estimates are included in backups. Pomodoro settings and session totals stay on this Mac.' : ''}` : 'Data is stored in this browser only. It won’t sync between devices. Clearing browser data removes your records. Export a backup to keep a copy.';
-  modal(`${modalHeading('Your space, your settings')}<p class="modal-intro">${isMac ? 'Set up FocoNow and manage your local backups.' : 'Manage your habit and keep a copy of your progress.'}</p><div class="settings-section appearance-section"><h3>Appearance</h3><p>Choose your look, or follow your device.</p><div class="appearance-options" role="group" aria-label="Appearance">${[['system','System','◐'],['light','Light','☀'],['dark','Dark','☾']].map(([value,label,symbol]) => `<button type="button" data-appearance-choice="${value}" aria-label="${label} appearance" aria-pressed="${appearance === value}"><span aria-hidden="true">${symbol}</span><b>${label}</b><i aria-hidden="true">${svg('check')}</i></button>`).join('')}</div><p id="appearance-status" class="appearance-status" role="status">${appearanceStatus()}</p></div>${isMac ? '' : `<div class="settings-section"><h3>${escape(habit().name)}</h3><p>Change your habit’s name, your reason, or when your current streak began.</p><button class="button" id="settings-edit">${svg('edit')}Edit current habit</button></div>`}${hasIPhoneFocus ? `<div class="settings-section"><h3>Protect your focus</h3><p>Choose which apps to block or give them one shared daily usage budget.</p><button class="button" id="settings-focus">${svg('lock')}App limits</button></div>` : ''}${isMac ? '' : `<div class="settings-section"><h3>A gentle daily nudge</h3><p>${reminder.enabled ? `A reminder at ${escape(reminder.time)}, every day.` : 'Choose a time to pause and check in.'}</p><button class="button" id="open-reminder">${svg('sun')}Daily reminder</button></div>`}${isMac ? '<div class="settings-section"><h3>Notifications & sounds</h3><p>A clear finish line. A gentle nudge when you need one.</p><button class="button" id="open-notification-settings">Manage notifications & sounds</button></div>' : ''}<div class="settings-section"><h3>Keep your progress safe</h3><p>${storageNote}</p><div class="settings-buttons"><button class="button primary" id="export-backup">Export backup</button><button class="button" id="import-backup">Import backup</button><input type="file" id="backup-file" accept="application/json,.json" hidden></div><p class="modal-error" id="import-error" role="alert"></p></div>${isMac ? '<div class="settings-section"><h3>Recovery copies</h3><p>Before your first change each day, the Mac app keeps a local copy of your previous data. Your 14 most recent copies stay on this Mac.</p><button class="button" id="open-recovery">Browse recovery copies</button></div><div class="settings-section"><h3>Made for your Mac</h3><div id="desktop-preferences"></div><p>Your counter and shortcuts are also in the menu bar. The app stays available there after you close this window.</p><button class="button" id="show-shortcuts">Keyboard shortcuts</button></div>' : ''}<div class="settings-section"><h3>A personal space</h3><p>No analytics, ads, or tracking scripts. Your notes and habit data aren’t sent to a server by this app.</p></div>`);
+  const storageNote = nativeHost ? `Your records are saved locally in this ${nativeDevice} app, independently of your browser. This version works offline and doesn’t sync between devices. Import a backup to bring over your existing data.${isMac ? ' Complete backups include tasks, deadlines, journals, bad habits, focus history, timer settings, preferences, and imported iPhone Screen Time reports. Mac permissions and login registration stay on this Mac.' : ''}` : 'Data is stored in this browser only. It won’t sync between devices. Clearing browser data removes your records. Export a backup to keep a copy.';
+  modal(`${modalHeading('Your space, your settings')}<p class="modal-intro">${isMac ? 'Set up FocoNow and manage your local backups.' : 'Manage your habit and keep a copy of your progress.'}</p><div class="settings-section appearance-section"><h3>Appearance</h3><p>Choose your look, or follow your device.</p><div class="appearance-options" role="group" aria-label="Appearance">${[['system','System','◐'],['light','Light','☀'],['dark','Dark','☾']].map(([value,label,symbol]) => `<button type="button" data-appearance-choice="${value}" aria-label="${label} appearance" aria-pressed="${appearance === value}"><span aria-hidden="true">${symbol}</span><b>${label}</b><i aria-hidden="true">${svg('check')}</i></button>`).join('')}</div><p id="appearance-status" class="appearance-status" role="status">${appearanceStatus()}</p></div>${isMac ? '' : `<div class="settings-section"><h3>${escape(habit().name)}</h3><p>Change your habit’s name, your reason, or when your current streak began.</p><button class="button" id="settings-edit">${svg('edit')}Edit current habit</button></div>`}${hasIPhoneFocus ? `<div class="settings-section"><h3>Protect your focus</h3><p>Choose which apps to block or give them one shared daily usage budget.</p><button class="button" id="settings-focus">${svg('lock')}App limits</button></div>` : ''}${isMac ? '' : `<div class="settings-section"><h3>A gentle daily nudge</h3><p>${reminder.enabled ? `A reminder at ${escape(reminder.time)}, every day.` : 'Choose a time to pause and check in.'}</p><button class="button" id="open-reminder">${svg('sun')}Daily reminder</button></div>`}${isMac ? '<div class="settings-section"><h3>Notifications & sounds</h3><p>A clear finish line. A gentle nudge when you need one.</p><button class="button" id="open-notification-settings">Manage notifications & sounds</button></div>' : ''}<div class="settings-section"><h3>Keep your progress safe</h3><p>${storageNote}</p><div class="settings-buttons"><button class="button primary" id="export-backup">${isMac ? 'Export complete backup' : 'Export backup'}</button><button class="button" id="import-backup">Import backup</button><input type="file" id="backup-file" accept="application/json,.json" hidden></div><p class="modal-error" id="import-error" role="alert"></p></div>${isMac ? '<div class="settings-section"><h3>Recovery copies</h3><p>Before your first change each day, the Mac app keeps a local copy of your previous data. Your 14 latest daily planner copies stay on this Mac. Complete restores also keep a full safety copy.</p><button class="button" id="open-recovery">Browse recovery copies</button></div><div class="settings-section"><h3>Made for your Mac</h3><div id="desktop-preferences"></div><p>Your counter and shortcuts are also in the menu bar. The app stays available there after you close this window.</p><button class="button" id="show-shortcuts">Keyboard shortcuts</button></div>' : ''}<div class="settings-section"><h3>A personal space</h3><p>No analytics, ads, or tracking scripts. Your notes and habit data aren’t sent to a server by this app.</p></div>`);
   $$('[data-appearance-choice]').forEach(button => button.addEventListener('click', () => applyAppearance(button.dataset.appearanceChoice, true)));
   $('#settings-focus')?.addEventListener('click', () => nativeHost.postMessage({ action: 'openFocus' }));
   $('#open-notification-settings')?.addEventListener('click', notificationSettingsModal);
@@ -467,11 +468,12 @@ function settingsModal() {
   });
 }
 
-function confirmBackupImport(raw) {
+function confirmBackupImport(raw, complete = false, sessions = 0) {
+  pendingCompleteImport = complete;
   pendingImport = validateState(raw);
-  modal(`${modalHeading('Restore your backup?')}<p class="modal-intro">This file contains ${pendingImport.habits.length} habit${pendingImport.habits.length === 1 ? '' : 's'}. Importing replaces all habits, tasks, and daily summaries currently ${nativeHost ? `in this ${nativeDevice} app` : 'on this browser'}.</p><p class="reason-note">${Object.keys(pendingImport.planner || {}).length} saved daily plans · ${Object.values(pendingImport.planner || {}).filter(p => p.summary.trim()).length} day summaries${Object.keys(pendingImport.planner || {}).length ? '' : '. This backup has no daily plans; restoring it clears the current planner.'}</p><div class="import-preview">${pendingImport.habits.slice(0,5).map(h => `<div><b>${escape(h.name)}</b><small>${h.checkins.length} check-ins · ${h.entries.length} reflections · ${h.history.length} past streaks</small></div>`).join('')}${pendingImport.habits.length > 5 ? `<p>And ${pendingImport.habits.length - 5} more habits.</p>` : ''}</div><p class="modal-intro">Export your current data first if you want to keep it.</p><div class="settings-buttons"><button class="button" id="export-before-import">Export current data</button></div><div class="modal-actions"><button class="button" data-close>Cancel</button><button class="button danger" id="confirm-import">Replace with backup</button></div>`);
+  modal(`${modalHeading(complete ? 'Restore your complete workspace?' : 'Restore your backup?')}<p class="modal-intro">This file contains ${pendingImport.habits.length} habit${pendingImport.habits.length === 1 ? '' : 's'}. Importing replaces all habits, tasks, and daily summaries currently ${nativeHost ? `in this ${nativeDevice} app` : 'on this browser'}.</p><p class="reason-note">${Object.keys(pendingImport.planner || {}).length} saved daily plans · ${Object.values(pendingImport.planner || {}).filter(p => p.summary.trim()).length} day summaries${Object.keys(pendingImport.planner || {}).length ? '' : '. This backup has no daily plans; restoring it clears the current planner.'}</p><p class="reason-note">${complete ? `Also restores ${sessions || 'saved'} focus sessions, timer settings, app preferences and imported Screen Time reports. A running timer is restored paused. A safety copy is kept before replacement.` : 'This older backup restores planner and habit data only. Your focus history and app preferences stay unchanged.'}</p><div class="import-preview">${pendingImport.habits.slice(0,5).map(h => `<div><b>${escape(h.name)}</b><small>${h.checkins.length} check-ins · ${h.entries.length} reflections · ${h.history.length} past streaks</small></div>`).join('')}${pendingImport.habits.length > 5 ? `<p>And ${pendingImport.habits.length - 5} more habits.</p>` : ''}</div><p class="modal-intro">Export your current data first if you want to keep it.</p><div class="settings-buttons"><button class="button" id="export-before-import">Export current data</button></div><p class="modal-error" id="complete-import-error" role="alert"></p><div class="modal-actions"><button class="button" data-close>Cancel</button><button class="button danger" id="confirm-import">Replace with backup</button></div>`);
   $('#export-before-import').addEventListener('click', downloadBackup);
-  $('#confirm-import').addEventListener('click', () => { selectedMood = null; savedDataUnreadable = false; save(pendingImport, 'Your backup has been restored.', true); pendingImport = undefined; closeModal(); });
+  $('#confirm-import').addEventListener('click', () => { if (pendingCompleteImport) { $('#confirm-import').disabled = true; nativeHost.postMessage({action:'restoreComplete',state:pendingImport}); return; } selectedMood = null; savedDataUnreadable = false; save(pendingImport, 'Your backup has been restored.', true); pendingImport = undefined; closeModal(); });
 }
 
 paintIcons();
@@ -513,6 +515,7 @@ window.addEventListener('storage', event => {
   try { state = event.newValue ? validateState(JSON.parse(event.newValue)) : initialState(); selectedMood = null; render(); toast('Progress updated from another tab.'); } catch { toast('Couldn’t read the updated data. Your current view is unchanged.', true); }
 });
 function refreshDayBoundary() { if (dayKey() !== renderedDay && plannerDate === renderedDay) plannerDate = dayKey(); }
+setInterval(() => { if (isMac && !document.hidden) renderPlanner(); }, 60000);
 setInterval(() => { if (document.hidden) return; if (dayKey() !== renderedDay) { refreshDayBoundary(); selectedMood = null; render(); } else renderCounter(); }, 1000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshDayBoundary(); render(); } });
 render(); route();
@@ -561,8 +564,19 @@ if (nativeHost) {
       $('#save-reminder')?.removeAttribute('disabled');
     } else if (detail.type === 'notice') toast(detail.message, detail.error === true);
     else if (detail.type === 'recoveryList') recoveryModal(detail.copies);
-    else if (detail.type === 'import') {
-      try { confirmBackupImport(detail.state); }
+    else if (detail.type === 'completeRestoreError') {
+      $('#confirm-import')?.removeAttribute('disabled');
+      if ($('#complete-import-error')) $('#complete-import-error').textContent = detail.message; else toast(detail.message,true);
+    } else if (detail.type === 'completeRestored') {
+      const restored = detail.bootstrap;
+      state = validateState(restored.state); pomodoro = restored.pomodoro;
+      plannerReminders = restored.plannerReminders; nudgeSettings = restored.nudges; reminder = restored.reminder;
+      desktopPreferences = restored.desktop; pendingImport = undefined; pendingCompleteImport = false;
+      savedDataUnreadable = false; storageAvailable = true; nativeSavePending = false;
+      applyAppearance(restored.appearance); closeModal(); render();
+      toast(pomodoro.status === 'paused' ? 'Complete backup restored. Your timer is paused; resume when you’re ready.' : 'Your complete backup has been restored.');
+    } else if (detail.type === 'import') {
+      try { confirmBackupImport(detail.state, detail.complete === true, detail.sessions); }
       catch (error) { toast(error.message, true); }
     } else if (detail.type === 'command') {
       runCommand(detail.action);
@@ -669,6 +683,7 @@ const desktopCommands = [
 function runCommand(action) {
   const handlers = { tasks: () => openTasks(), pomodoroToggle: () => sendPomodoro(pomodoro.status === 'running' ? 'pause' : 'start'), planner: () => openPlanner(), morning: () => { openPlanner(); morningModal(); }, summary: () => { openPlanner(); $('#day-summary').focus(); }, plannerReminders: plannerRemindersModal, notifications: notificationSettingsModal, checkin: checkinModal, reflect: () => entryModal(), urge: urgeModal, breathe: breatheModal, addHabit: () => habitModal(true), settings: settingsModal, export: downloadBackup, quickActions: commandModal };
   if (handlers[action]) handlers[action]();
+  else if (action.startsWith('taskDay:')) { closeModal(); openTasks(action.slice(8)); }
   else if (['overview', 'journal', 'insights', ...(isMac?['phone']:[])].includes(action)) { closeModal(); location.hash = action; route(); }
   else if (action.startsWith('habit:')) {
     selectHabit(action.slice(6));
@@ -706,7 +721,7 @@ function shortcutsModal() {
 }
 function recoveryModal(copies) {
   if (!isMac || !Array.isArray(copies)) return;
-  modal(`${modalHeading('A little peace of mind')}<p class="modal-intro">Each copy holds your data before the first change on its date. Choose one to review the restore confirmation. Your current data stays in place until you confirm.</p><div>${copies.length ? copies.map(copy => `<div class="recovery-copy"><span>${escape(formatDate(new Date(`${copy.date}T12:00:00`), { year: 'numeric' }))}<small>Before the first change that day</small></span><button class="button" data-recovery="${escape(copy.name)}">Choose copy</button></div>`).join('') : '<p class="reason-note">No recovery copies yet. The first copy appears after you change previously saved data.</p>'}</div><div class="modal-actions"><button class="button" data-close>Close</button></div>`);
+  modal(`${modalHeading('A little peace of mind')}<p class="modal-intro">Each copy holds your data before the first change on its date. Choose one to review the restore confirmation. Your current data stays in place until you confirm.</p><div>${copies.length ? copies.map(copy => `<div class="recovery-copy"><span>${escape(copy.name.startsWith('complete-') ? copy.date : formatDate(new Date(`${copy.date}T12:00:00`), { year: 'numeric' }))}<small>${copy.name.startsWith('complete-') ? 'Before a complete restore · all workspace data' : 'Before the first change that day · planner & habits'}</small></span><button class="button" data-recovery="${escape(copy.name)}">Choose copy</button></div>`).join('') : '<p class="reason-note">No recovery copies yet. The first copy appears after you change previously saved data.</p>'}</div><div class="modal-actions"><button class="button" data-close>Close</button></div>`);
   $$('[data-recovery]').forEach(button => button.addEventListener('click', () => nativeHost.postMessage({ action: 'recoveryOpen', name: button.dataset.recovery })));
 }
 if (isMac) {
@@ -740,6 +755,61 @@ if (isMac) {
   });
 }
 
+function deadlineChip(task) {
+  if (!task.dueDate) return '';
+  const status = deadlineStatus(task), date = new Date(`${task.dueDate}T12:00:00`);
+  const label = status === 'overdue' ? 'Overdue' : status === 'today' ? 'Due today' : `Due ${date.toLocaleDateString(undefined,{month:'short',day:'numeric',...(date.getFullYear()!==new Date().getFullYear()?{year:'numeric'}:{})})}`;
+  return `<span class="deadline-chip ${status}${task.done?' deadline-done':''}">${svg('clock')}${escape(label)}${task.dueTime ? ` · ${escape(task.dueTime)}` : ''}${task.remindAtDeadline ? '<span aria-label="Reminder enabled"> · alert</span>' : ''}</span>`;
+}
+function updateDaySelectors() {
+  const date = new Date(`${plannerDate}T12:00:00`), today = dayKey();
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const relative = plannerDate === today ? 'Today' : plannerDate === dayKey(tomorrow) ? 'Tomorrow' : plannerDate === dayKey(yesterday) ? 'Yesterday' : date.toLocaleDateString(undefined,{weekday:'long'});
+  for (const kind of ['planner','tasks']) {
+    const button = $(`#${kind}-date-button`); if (!button) continue;
+    button.querySelector('[data-day-relative]').textContent = relative;
+    button.querySelector('[data-day-label]').textContent = date.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+    button.setAttribute('aria-label',`Choose ${kind === 'tasks' ? 'task' : 'planner'} day: ${relative}, ${date.toLocaleDateString()}`);
+    $(`#${kind}-today`).disabled = plannerDate === today;
+  }
+}
+function showDayPicker(view) {
+  $('#day-picker')?.close();
+  const anchor = $(`#${view}-date-button`), picker=document.createElement('dialog');
+  picker.id='day-picker'; picker.className='day-picker'; picker.setAttribute('aria-label','Choose a day');
+  let cursor = new Date(`${plannerDate}T12:00:00`), month = new Date(cursor.getFullYear(),cursor.getMonth(),1,12);
+  const select = date => { openPlanner(dayKey(date),view); picker.close(); };
+  const moveMonth = amount => { month.setMonth(month.getMonth()+amount); cursor=new Date(month); draw(true); };
+  function draw(focus = false) {
+    const start=new Date(month); start.setDate(1-((start.getDay()+6)%7));
+    const days=Array.from({length:42},(_,i)=>{const date=new Date(start);date.setDate(start.getDate()+i);return date;});
+    const rows=Array.from({length:6},(_,row)=>`<div role="row">${days.slice(row*7,row*7+7).map(d=>`<button type="button" role="gridcell" data-pick-date="${dayKey(d)}" tabindex="${dayKey(d)===dayKey(cursor)?0:-1}" aria-label="${escape(d.toLocaleDateString(undefined,{dateStyle:'full'}))}" aria-selected="${dayKey(d)===plannerDate}" ${dayKey(d)===dayKey()?'aria-current="date"':''} class="${d.getMonth()!==month.getMonth()?'outside-month':''}">${d.getDate()}</button>`).join('')}</div>`).join('');
+    picker.innerHTML=`<div class="day-picker-heading"><div><span class="section-label">YOUR DAY</span><h3 id="day-picker-month">${month.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</h3></div><div><button class="icon-button" type="button" data-month-back aria-label="Previous month">‹</button><button class="icon-button" type="button" data-month-next aria-label="Next month">›</button></div></div><div class="day-weekdays" aria-hidden="true">${['M','T','W','T','F','S','S'].map(d=>`<span>${d}</span>`).join('')}</div><div class="day-grid" role="grid" aria-labelledby="day-picker-month">${rows}</div><div class="day-picker-shortcuts"><button type="button" class="button" data-picker-today>Today</button><button type="button" class="button" data-picker-tomorrow>Tomorrow</button><button type="button" class="text-button" data-picker-close>Close</button></div>`;
+    picker.querySelector('[data-month-back]').onclick=()=>moveMonth(-1);
+    picker.querySelector('[data-month-next]').onclick=()=>moveMonth(1);
+    picker.querySelector('[data-picker-close]').onclick=()=>picker.close();
+    picker.querySelector('[data-picker-today]').onclick=()=>select(new Date());
+    picker.querySelector('[data-picker-tomorrow]').onclick=()=>{const d=new Date();d.setDate(d.getDate()+1);select(d);};
+    picker.querySelectorAll('[data-pick-date]').forEach(b=>b.onclick=()=>select(new Date(`${b.dataset.pickDate}T12:00:00`)));
+    if(focus) picker.querySelector(`[data-pick-date="${dayKey(cursor)}"]`)?.focus({preventScroll:true});
+  }
+  picker.addEventListener('keydown',event=>{
+    if(!event.target.matches('[data-pick-date]')) return;
+    cursor=new Date(`${event.target.dataset.pickDate}T12:00:00`);
+    const moves={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7};
+    if(event.key in moves) { event.preventDefault();cursor.setDate(cursor.getDate()+moves[event.key]);month=new Date(cursor.getFullYear(),cursor.getMonth(),1,12);draw(true); }
+    else if(event.key==='PageUp'||event.key==='PageDown') {event.preventDefault();moveMonth(event.key==='PageUp'?-1:1);}
+  });
+  picker.addEventListener('click',event=>{if(event.target===picker){const r=picker.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)picker.close();}});
+  picker.addEventListener('close',()=>{picker.remove();anchor.focus({preventScroll:true});});
+  document.body.append(picker);draw();picker.showModal();
+  const bounds=anchor.getBoundingClientRect();
+  picker.style.left=`${Math.max(12,Math.min(bounds.left,innerWidth-picker.offsetWidth-12))}px`;
+  picker.style.top=`${Math.max(12,Math.min(bounds.bottom+10,innerHeight-picker.offsetHeight-12))}px`;
+  picker.querySelector(`[data-pick-date="${plannerDate}"]`)?.focus({preventScroll:true});
+}
+
 function openPlanner(date = dayKey(), view = 'planner') {
   if (!isMac || !/^\d{4}-\d{2}-\d{2}$/.test(date) || dayKey(new Date(`${date}T12:00:00`)) !== date) return;
   plannerDate = date;
@@ -753,11 +823,12 @@ function renderPlanner() {
   const plan = dayPlan(state, plannerDate), done = plan.tasks.filter(t => t.done).length;
   $('#planner-date').value = plannerDate;
   $('#tasks-date').value = plannerDate;
+  updateDaySelectors();
   const focus = $('#day-focus'), summary = $('#day-summary');
   if (document.activeElement !== focus || focus.dataset.date !== plannerDate) focus.value = plan.focus;
   if (document.activeElement !== summary || summary.dataset.date !== plannerDate) summary.value = plan.summary;
   focus.dataset.date = summary.dataset.date = plannerDate;
-  if ($('#new-task').dataset.date !== plannerDate) { $('#new-task').value = ''; $('#new-task').dataset.date = plannerDate; }
+  if ($('#new-task').dataset.date !== plannerDate) { $('#new-task').value = ''; $('#new-task-due').value = ''; $('#new-task').dataset.date = plannerDate; }
   summary.disabled = plannerDate > dayKey();
   $$('[data-summary-prompt]').forEach(button => button.disabled = summary.disabled);
   $('#finish-day').disabled = plannerDate > dayKey();
@@ -769,10 +840,10 @@ function renderPlanner() {
   $('#task-progress').textContent = `${done} / ${plan.tasks.length} done`;
   $('#task-progress-bar').style.width = `${plan.tasks.length ? done / plan.tasks.length * 100 : 0}%`;
   $$('[data-task-filter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.taskFilter === taskFilter)));
-  const tasks = [...plan.tasks].filter(t => (taskFilter === 'all' || (taskFilter === 'done' ? t.done : taskFilter === 'priority' ? t.priority && !t.done : !t.done)) && `${t.title} ${t.notes || ''}`.toLocaleLowerCase().includes(taskQuery.toLocaleLowerCase())).sort((a,b) => Number(a.done) - Number(b.done) || Number(b.priority) - Number(a.priority));
+  const tasks = [...plan.tasks].filter(t => (taskFilter === 'all' || (taskFilter === 'done' ? t.done : taskFilter === 'priority' ? t.priority && !t.done : taskFilter === 'overdue' ? deadlineStatus(t) === 'overdue' : !t.done)) && `${t.title} ${t.notes || ''}`.toLocaleLowerCase().includes(taskQuery.toLocaleLowerCase())).sort((a,b) => Number(a.done) - Number(b.done) || Number(b.priority) - Number(a.priority));
   $('#day-tasks').innerHTML = tasks.length ? tasks.map(t => {
     const completed = (pomodoro.sessions || []).filter(session => session.taskId === t.originId).length;
-    return `<div class="task-row${t.done ? ' complete' : ''}${t.priority ? ' priority' : ''}${pomodoro.taskId === t.originId && ['running','paused'].includes(pomodoro.status) ? ' focused' : ''}"><button class="task-checkbox" data-toggle-task="${escape(t.id)}" aria-label="${escape(t.done ? `Mark ${t.title} as unfinished` : `Complete ${t.title}`)}" aria-pressed="${t.done}">${t.done ? svg('check') : ''}</button><button class="task-title" data-edit-task="${escape(t.id)}"><span>${escape(t.title)}</span>${t.notes ? `<p>${escape(t.notes.slice(0,140))}${t.notes.length>140?'…':''}</p>` : ''}<small>${t.priority ? '<b>PRIORITY</b><i>·</i>' : ''}${completed} / ${t.estimate || 1} focus sessions</small></button><div class="task-row-actions">${!t.done ? `<button class="task-focus-button" data-focus-task="${escape(t.id)}" aria-label="Focus on ${escape(t.title)}">${svg('arrow')}<span>Focus</span></button>` : ''}<button class="task-priority" data-priority-task="${escape(t.id)}" aria-label="${escape(t.priority ? `Remove priority from ${t.title}` : `Prioritize ${t.title}`)}" aria-pressed="${t.priority}">${svg('star')}</button></div></div>`;
+    return `<div class="task-row${t.done ? ' complete' : ''}${t.priority ? ' priority' : ''}${pomodoro.taskId === t.originId && ['running','paused'].includes(pomodoro.status) ? ' focused' : ''}"><button class="task-checkbox" data-toggle-task="${escape(t.id)}" aria-label="${escape(t.done ? `Mark ${t.title} as unfinished` : `Complete ${t.title}`)}" aria-pressed="${t.done}">${t.done ? svg('check') : ''}</button><button class="task-title" data-edit-task="${escape(t.id)}"><span>${escape(t.title)}</span>${t.notes ? `<p>${escape(t.notes.slice(0,140))}${t.notes.length>140?'…':''}</p>` : ''}<small>${t.priority ? '<b>PRIORITY</b><i>·</i>' : ''}${completed} / ${t.estimate || 1} focus sessions</small>${deadlineChip(t)}</button><div class="task-row-actions">${!t.done ? `<button class="task-focus-button" data-focus-task="${escape(t.id)}" aria-label="Focus on ${escape(t.title)}">${svg('arrow')}<span>Focus</span></button>` : ''}<button class="task-priority" data-priority-task="${escape(t.id)}" aria-label="${escape(t.priority ? `Remove priority from ${t.title}` : `Prioritize ${t.title}`)}" aria-pressed="${t.priority}">${svg('star')}</button></div></div>`;
   }).join('') : `<div class="task-empty"><span>${svg('flag')}</span><h3>${plan.tasks.length ? 'A little breathing room.' : 'Your next good thing starts here.'}</h3><p>${plan.tasks.length ? 'No tasks match this view. Try another filter or search.' : 'Add a task, choose a priority, and give it one focused session.'}</p></div>`;
   $$('[data-toggle-task]').forEach(button => button.addEventListener('click', () => changeTask(button.dataset.toggleTask, t => ({ ...t, done: !t.done }))));
   $$('[data-priority-task]').forEach(button => button.addEventListener('click', () => changeTask(button.dataset.priorityTask, t => ({ ...t, priority: !t.priority }))));
@@ -802,14 +873,19 @@ function changeTask(id, change, date = plannerDate) {
 function taskModal(id) {
   const date = plannerDate, task = dayPlan(state,date).tasks.find(t => t.id === id);
   if (!task) return;
-  modal(`${modalHeading('Make it a little clearer')}<form id="edit-task-form"><label class="field"><span>Task</span><input id="edit-task-title" maxlength="240" required value="${escape(task.title)}"></label><label class="field"><span>A little detail <span class="muted">(optional)</span></span><textarea id="edit-task-notes" maxlength="2000" placeholder="What does done look like?">${escape(task.notes || '')}</textarea></label><label class="field"><span>Estimated focus sessions</span><input id="edit-task-estimate" type="number" min="1" max="12" required value="${task.estimate || 1}"><small>One session uses your chosen Pomodoro duration.</small></label><label class="reminder-toggle"><span>Make this a priority</span><input id="edit-task-priority" type="checkbox" ${task.priority ? 'checked' : ''}></label>${actions('Save task')}</form><button class="text-button delete-task" id="delete-task">Delete task</button>`);
+  modal(`${modalHeading('Make it a little clearer')}<form id="edit-task-form"><label class="field"><span>Task</span><input id="edit-task-title" maxlength="240" required value="${escape(task.title)}"></label><label class="field"><span>A little detail <span class="muted">(optional)</span></span><textarea id="edit-task-notes" maxlength="2000" placeholder="What does done look like?">${escape(task.notes || '')}</textarea></label><label class="field"><span>Estimated focus sessions</span><input id="edit-task-estimate" type="number" min="1" max="12" required value="${task.estimate || 1}"><small>One session uses your chosen Pomodoro duration.</small></label><div class="task-deadline-editor"><div class="reminder-time-grid"><label class="field"><span>Deadline <small>optional</small></span><input type="date" id="edit-task-due" value="${escape(task.dueDate || '')}"></label><label class="field"><span>Time <small>optional · local time</small></span><input type="time" id="edit-task-due-time" value="${escape(task.dueTime || '')}"></label></div><label class="reminder-toggle"><span><b>Remind me at the deadline</b><small>Choose a date and time. The alert keeps your task title private.</small></span><input type="checkbox" id="edit-task-due-reminder" role="switch" ${task.remindAtDeadline ? 'checked' : ''}></label><button class="text-button" type="button" id="clear-task-deadline">Clear deadline</button></div><label class="reminder-toggle"><span>Make this a priority</span><input id="edit-task-priority" type="checkbox" ${task.priority ? 'checked' : ''}></label>${actions('Save task')}</form><button class="text-button delete-task" id="delete-task">Delete task</button>`);
+  $('#clear-task-deadline').addEventListener('click',()=>{ $('#edit-task-due').value=''; $('#edit-task-due-time').value=''; $('#edit-task-due-reminder').checked=false; });
   $('#edit-task-form').addEventListener('submit', event => {
     event.preventDefault(); const title = $('#edit-task-title').value.trim();
     if (!title) { $('#form-error').textContent = 'Give this task a short name.'; return; }
     const priority = $('#edit-task-priority').checked;
     const notes = $('#edit-task-notes').value.trim(), estimate = Number($('#edit-task-estimate').value);
     if (!Number.isInteger(estimate) || estimate < 1 || estimate > 12) { $('#form-error').textContent = 'Estimate between 1 and 12 focus sessions.'; return; }
-    changeTask(id, t => ({ ...t, title, priority, notes, estimate }), date); closeModal();
+    const dueDate=$('#edit-task-due').value, dueTime=$('#edit-task-due-time').value, remindAtDeadline=$('#edit-task-due-reminder').checked;
+    if (!validDeadline(dueDate,dueTime) || (remindAtDeadline && (!dueDate || !dueTime))) { $('#form-error').textContent='Choose a valid date and time for a deadline reminder.'; return; }
+    changeTask(id, t => ({ ...t, title, priority, notes, estimate, dueDate, dueTime, remindAtDeadline }), date);
+    if (remindAtDeadline) nativeHost?.postMessage({action:'deadlineAuthorization'});
+    closeModal();
   });
   $('#delete-task').addEventListener('click', () => {
     modal(`${modalHeading('Remove this task?')}<p class="modal-intro">${escape(task.title)}</p><div class="modal-actions"><button class="button" data-close>Keep task</button><button class="button danger" id="confirm-delete-task">Delete task</button></div>`);
@@ -850,6 +926,8 @@ function setupPlanner() {
   $('#planner-prev').addEventListener('click', () => moveDay(-1));
   $('#planner-next').addEventListener('click', () => moveDay(1));
   $('#planner-today').addEventListener('click', () => openPlanner());
+  $('#planner-date-button').addEventListener('click',()=>showDayPicker('planner'));
+  $('#tasks-date-button').addEventListener('click',()=>showDayPicker('tasks'));
   $('#planner-date').addEventListener('change', event => openPlanner(event.target.value));
   $('#day-open-tasks').addEventListener('click', () => openTasks(plannerDate));
   $('#day-plan-morning').addEventListener('click', morningModal);
@@ -867,7 +945,7 @@ function setupPlanner() {
   $('#day-focus').addEventListener('input', event => saveDay({ focus: event.target.value }, event.target.dataset.date, undefined, true));
   $('#add-task-form').addEventListener('submit', event => {
     event.preventDefault(); const input = $('#new-task');
-    try { save(addDayTask(state,plannerDate,input.value)); input.value = ''; $('#task-error').textContent = ''; input.focus(); }
+    try { save(addDayTask(state,plannerDate,input.value,false,$('#new-task-due').value)); input.value = ''; $('#new-task-due').value=''; $('#task-error').textContent = ''; input.focus(); }
     catch (error) { $('#task-error').textContent = error.message; }
   });
   $$('[data-task-filter]').forEach(button => button.addEventListener('click', () => { taskFilter = button.dataset.taskFilter; renderPlanner(); }));

@@ -230,6 +230,20 @@ final class PomodoroEngine: ObservableObject {
         value.status = "ready"; value.duration = duration(value.phase,value.settings); value.remaining = value.duration; value.endsAt = nil
         try commit(value)
     }
+    func backupRecord() -> PomodoroRecord {
+        tick()
+        var value = record
+        if value.status == "running" {
+            settleFocus(&value, until: clock().timeIntervalSince1970 * 1000)
+            value.remaining = max(1, remaining); value.endsAt = nil; value.status = "paused"
+        }
+        return value
+    }
+    func acceptRestoredRecord(_ value: PomodoroRecord) {
+        cancelAlert(force: true); alarmSound?.stop()
+        record = value; unreadable = false; storageError = nil; notificationWarning = nil
+        restoringExpiredTimer = false; now = clock(); broadcast()
+    }
     func setNotifications(_ enabled: Bool, completion: @escaping (String?) -> Void) {
         if !enabled {
             let wasEnabled = record.settings.notifications
@@ -264,7 +278,7 @@ final class PomodoroEngine: ObservableObject {
     }
     private func cancelAlert(force: Bool = false) {
         alertGeneration += 1; scheduledSoundDeadline = nil
-        guard timer != nil, record.settings.notifications || force else { return }
+        guard timer != nil, DesktopLaunchCheck.directory == nil, record.settings.notifications || force else { return }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Self.notificationId])
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [Self.notificationId])
     }
